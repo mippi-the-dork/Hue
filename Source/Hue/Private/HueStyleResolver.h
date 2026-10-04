@@ -1,4 +1,4 @@
-﻿// Copyright Mippithedork 2026, Inc. All Rights Reserved.
+// Copyright Mippithedork 2026, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -27,7 +27,30 @@ struct FHueBlueprintCategoryInfo
 class FHueStyleResolver
 {
 public:
+    /**
+     * True only after Hue has a confirmed visual path for this live node.
+     * UI surfaces use this so Hue never offers controls that cannot render.
+     */
     static bool IsSupportedNode(const UEdGraphNode* Node);
+
+    /**
+     * Broad capability check used while constructing graph widgets. This says
+     * Hue knows how to attempt this K2 presentation; IsSupportedNode() becomes
+     * true only after that presentation path has actually been established.
+     */
+    static bool CanStyleNode(const UEdGraphNode* Node);
+
+    /** Record that Hue successfully owns or decorated this node presentation. */
+    static void MarkVisualSupport(UEdGraphNode* Node);
+
+    /** Remove a provisional support claim when native decoration cannot attach. */
+    static void UnmarkVisualSupport(UEdGraphNode* Node);
+
+    /**
+     * Node-owned visual widgets bypass registered node factories. These known
+     * families use a deferred native-widget decoration bridge instead.
+     */
+    static bool UsesSelfVisualBridge(const UEdGraphNode* Node);
 
     static bool ResolveColor(const UEdGraphNode* Node, EHueStyleChannel Channel, FLinearColor& OutColor);
     static FLinearColor GetPickerInitialColor(const UEdGraphNode* Node, EHueStyleScope Scope, EHueStyleChannel Channel);

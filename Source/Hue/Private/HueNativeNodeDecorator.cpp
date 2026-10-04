@@ -189,9 +189,10 @@ namespace HueNativeNodeDecoratorPrivate
         return false;
     }
 
-    static void DecorateWidgetTree(
+    static void CollectCompatibleSurfaces(
         SWidget& Widget,
-        const TWeakObjectPtr<UK2Node>& WeakNode)
+        TArray<SBorder*>& OutHeaderBorders,
+        TArray<SImage*>& OutBodyImages)
     {
         const FName BorderType = SBorder::StaticWidgetClass().GetWidgetType();
         const FName ImageType = SImage::StaticWidgetClass().GetWidgetType();
@@ -205,19 +206,8 @@ namespace HueNativeNodeDecoratorPrivate
             && WidgetChildren->GetChildAt(0)->GetType() == ImageType
             && ContainsTitleColorSpill(WidgetChildren->GetChildAt(1).Get()))
         {
-            SImage& BodyImage = static_cast<SImage&>(
-                WidgetChildren->GetChildAt(0).Get());
-
-            BodyImage.SetColorAndOpacity(
-                TAttribute<FSlateColor>::Create(
-                    TAttribute<FSlateColor>::FGetter::CreateLambda(
-                        [WeakNode]()
-                        {
-                            return ResolveSlateColor(
-                                WeakNode,
-                                EHueStyleChannel::BodyColor,
-                                GetNativeBodyFallback(WeakNode));
-                        })));
+            OutBodyImages.AddUnique(static_cast<SImage*>(
+                &WidgetChildren->GetChildAt(0).Get()));
         }
 
         if (Widget.GetType() == BorderType)
@@ -225,57 +215,105 @@ namespace HueNativeNodeDecoratorPrivate
             SBorder& Border = static_cast<SBorder&>(Widget);
             if (Border.GetBorderImage() == FAppStyle::GetBrush("Graph.Node.ColorSpill"))
             {
-                const TAttribute<FSlateColor> HeaderAttribute =
-                    TAttribute<FSlateColor>::Create(
-                        TAttribute<FSlateColor>::FGetter::CreateLambda(
-                            [WeakNode]()
-                            {
-                                return ResolveSlateColor(
-                                    WeakNode,
-                                    EHueStyleChannel::HeaderColor,
-                                    GetNativeHeaderFallback(WeakNode));
-                            }));
-
-                Border.SetBorderBackgroundColor(HeaderAttribute);
-
-                const TAttribute<FSlateColor> HeaderTextAttribute =
-                    TAttribute<FSlateColor>::Create(
-                        TAttribute<FSlateColor>::FGetter::CreateLambda(
-                            [WeakNode]()
-                            {
-                                return ResolveSlateColor(
-                                    WeakNode,
-                                    EHueStyleChannel::HeaderTextColor,
-                                    GetNativeHeaderTextFallback(WeakNode));
-                            }));
-
-                BindTextBlocks(Border.GetContent().Get(), HeaderTextAttribute);
+                OutHeaderBorders.AddUnique(&Border);
             }
         }
-        FChildren* Children = Widget.GetChildren();
-        if (!Children)
+
+        if (!WidgetChildren)
         {
             return;
         }
 
-        for (int32 ChildIndex = 0; ChildIndex < Children->Num(); ++ChildIndex)
+        for (int32 ChildIndex = 0; ChildIndex < WidgetChildren->Num(); ++ChildIndex)
         {
-            DecorateWidgetTree(Children->GetChildAt(ChildIndex).Get(), WeakNode);
+            CollectCompatibleSurfaces(
+                WidgetChildren->GetChildAt(ChildIndex).Get(),
+                OutHeaderBorders,
+                OutBodyImages);
         }
     }
+
 }
 
-void FHueNativeNodeDecorator::Apply(
+bool FHueNativeNodeDecorator::Apply(
     const TSharedRef<SGraphNode>& NativeNode,
     UK2Node* Node)
 {
     if (!Node)
     {
-        return;
+        return false;
+    }
+
+    TArray<SBorder*> HeaderBorders;
+    TArray<SImage*> BodyImages;
+    HueNativeNodeDecoratorPrivate::CollectCompatibleSurfaces(
+        NativeNode.Get(),
+        HeaderBorders,
+        BodyImages);
+
+    // Hue's four-channel contract assumes a recognizable title and body
+    // surface. Detect first and mutate second so an incompatible custom widget
+    // is left completely untouched rather than partially decorated.
+    if (HeaderBorders.IsEmpty() || BodyImages.IsEmpty())
+    {
+        return false;
     }
 
     const TWeakObjectPtr<UK2Node> WeakNode(Node);
-    HueNativeNodeDecoratorPrivate::DecorateWidgetTree(NativeNode.Get(), WeakNode);
+
+    const TAttribute<FSlateColor> BodyAttribute =
+        TAttribute<FSlateColor>::Create(
+            TAttribute<FSlateColor>::FGetter::CreateLambda(
+                [WeakNode]()
+                {
+                    return HueNativeNodeDecoratorPrivate::ResolveSlateColor(
+                        WeakNode,
+                        EHueStyleChannel::BodyColor,
+                        HueNativeNodeDecoratorPrivate::GetNativeBodyFallback(WeakNode));
+                }));
+
+    for (SImage* BodyImage : BodyImages)
+    {
+        if (BodyImage)
+        {
+            BodyImage->SetColorAndOpacity(BodyAttribute);
+        }
+    }
+
+    const TAttribute<FSlateColor> HeaderAttribute =
+        TAttribute<FSlateColor>::Create(
+            TAttribute<FSlateColor>::FGetter::CreateLambda(
+                [WeakNode]()
+                {
+                    return HueNativeNodeDecoratorPrivate::ResolveSlateColor(
+                        WeakNode,
+                        EHueStyleChannel::HeaderColor,
+                        HueNativeNodeDecoratorPrivate::GetNativeHeaderFallback(WeakNode));
+                }));
+
+    const TAttribute<FSlateColor> HeaderTextAttribute =
+        TAttribute<FSlateColor>::Create(
+            TAttribute<FSlateColor>::FGetter::CreateLambda(
+                [WeakNode]()
+                {
+                    return HueNativeNodeDecoratorPrivate::ResolveSlateColor(
+                        WeakNode,
+                        EHueStyleChannel::HeaderTextColor,
+                        HueNativeNodeDecoratorPrivate::GetNativeHeaderTextFallback(WeakNode));
+                }));
+
+    for (SBorder* HeaderBorder : HeaderBorders)
+    {
+        if (!HeaderBorder)
+        {
+            continue;
+        }
+
+        HeaderBorder->SetBorderBackgroundColor(HeaderAttribute);
+        HueNativeNodeDecoratorPrivate::BindTextBlocks(
+            HeaderBorder->GetContent().Get(),
+            HeaderTextAttribute);
+    }
 
     TArray<TSharedRef<SWidget>> PinWidgets;
     NativeNode->GetPins(PinWidgets);
@@ -284,4 +322,26 @@ void FHueNativeNodeDecorator::Apply(
         TSharedRef<SGraphPin> GraphPin = StaticCastSharedRef<SGraphPin>(PinWidget);
         HueNativeNodeDecoratorPrivate::BindPinLabel(GraphPin.Get(), WeakNode);
     }
+
+    return true;
+}
+
+bool FHueNativeNodeDecorator::ApplyToDisplayedNode(UK2Node* Node)
+{
+    if (!Node)
+    {
+        return false;
+    }
+
+    // UEdGraphNode::DEPRECATED_NodeWidget is the only public bridge exposed by
+    // Unreal for reaching a node-owned visual widget after CreateVisualWidget
+    // bypasses registered graph factories. Hue uses it only as a compatibility
+    // fallback for nodes that never reached Hue's registered visual factory.
+    TSharedPtr<SGraphNode> NativeNode = Node->DEPRECATED_NodeWidget.Pin();
+    if (!NativeNode.IsValid())
+    {
+        return false;
+    }
+
+    return Apply(NativeNode.ToSharedRef(), Node);
 }

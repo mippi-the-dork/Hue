@@ -8,6 +8,7 @@
 #include "Engine/Blueprint.h"
 #include "Framework/Application/SlateApplication.h"
 #include "HueBlueprintExtension.h"
+#include "HueNativeNodeDecorator.h"
 #include "HueSettings.h"
 #include "K2Node.h"
 #include "K2Node_AddPinInterface.h"
@@ -36,6 +37,8 @@
 
 namespace HueStyleResolverPrivate
 {
+    static TSet<TWeakObjectPtr<UEdGraphNode>> VisuallySupportedNodes;
+
     static void InvalidateHueWidgets()
     {
         if (FSlateApplication::IsInitialized())
@@ -341,7 +344,90 @@ namespace HueStyleResolverPrivate
     }
 }
 
+bool FHueStyleResolver::UsesSelfVisualBridge(const UEdGraphNode* Node)
+{
+    const UK2Node* K2Node = Cast<UK2Node>(Node);
+    if (!K2Node)
+    {
+        return false;
+    }
+
+    // Create Widget owns its visual widget and therefore bypasses registered
+    // FGraphPanelNodeFactory implementations. Keep this name-based on purpose:
+    // UK2Node_CreateWidget lives in UMGEditor, and Hue should not need a hard
+    // UMGEditor dependency just to decorate the finished native Slate widget.
+    static const FName CreateWidgetClassName(TEXT("K2Node_CreateWidget"));
+    return K2Node->GetClass()->GetFName() == CreateWidgetClassName;
+}
+
+void FHueStyleResolver::MarkVisualSupport(UEdGraphNode* Node)
+{
+    if (!Node)
+    {
+        return;
+    }
+
+    HueStyleResolverPrivate::VisuallySupportedNodes.Add(Node);
+
+    // Opportunistically prune dead weak entries. This registry is editor-only
+    // and normally tiny, but keeping it clean avoids stale support claims after
+    // Blueprint recompiles/reinstances.
+    for (auto It = HueStyleResolverPrivate::VisuallySupportedNodes.CreateIterator(); It; ++It)
+    {
+        if (!It->IsValid())
+        {
+            It.RemoveCurrent();
+        }
+    }
+}
+
+void FHueStyleResolver::UnmarkVisualSupport(UEdGraphNode* Node)
+{
+    if (!Node)
+    {
+        return;
+    }
+
+    HueStyleResolverPrivate::VisuallySupportedNodes.Remove(
+        TWeakObjectPtr<UEdGraphNode>(Node));
+}
+
 bool FHueStyleResolver::IsSupportedNode(const UEdGraphNode* Node)
+{
+    if (!CanStyleNode(Node))
+    {
+        return false;
+    }
+
+    const TWeakObjectPtr<UEdGraphNode> WeakNode(
+        const_cast<UEdGraphNode*>(Node));
+
+    if (HueStyleResolverPrivate::VisuallySupportedNodes.Contains(WeakNode))
+    {
+        return true;
+    }
+
+    // A K2 node can bypass every registered graph-node factory by returning
+    // its own widget from UEdGraphNode::CreateVisualWidget(). When the native
+    // widget is already on screen, opportunistically test whether it exposes
+    // the standard GraphEditor header/body layers Hue knows how to decorate.
+    // The decorator only reports success after both surfaces are found, so an
+    // arbitrary custom widget cannot accidentally receive Hue controls that do
+    // nothing. This also gives future engine/third-party node-owned widgets a
+    // compatibility path without hardcoding each class name.
+    UK2Node* MutableK2Node = Cast<UK2Node>(
+        const_cast<UEdGraphNode*>(Node));
+    if (MutableK2Node
+        && FHueNativeNodeDecorator::ApplyToDisplayedNode(MutableK2Node))
+    {
+        MarkVisualSupport(MutableK2Node);
+        return true;
+    }
+
+    return false;
+}
+
+bool FHueStyleResolver::CanStyleNode(const UEdGraphNode* Node)
 {
     if (!Node)
     {

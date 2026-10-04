@@ -1,4 +1,4 @@
-﻿// Copyright Mippithedork 2026, Inc. All Rights Reserved.
+// Copyright Mippithedork 2026, Inc. All Rights Reserved.
 
 #include "HueNodeFactory.h"
 
@@ -70,9 +70,14 @@ namespace HueNodeFactoryPrivate
 
         FNativeFactoryGuard Guard;
         TSharedPtr<SGraphNode> NativeWidget = FNodeFactory::CreateNodeWidget(Node);
-        if (NativeWidget.IsValid())
+        if (!NativeWidget.IsValid()
+            || !FHueNativeNodeDecorator::Apply(NativeWidget.ToSharedRef(), Node))
         {
-            FHueNativeNodeDecorator::Apply(NativeWidget.ToSharedRef(), Node);
+            // Hue marks nodes provisionally before native construction so its
+            // exec-pin factory can participate. If the finished native widget
+            // does not expose a compatible full presentation, retract that
+            // claim. The Hue exec pin then falls back to Unreal's native color.
+            FHueStyleResolver::UnmarkVisualSupport(Node);
         }
         return NativeWidget;
     }
@@ -85,7 +90,7 @@ TSharedPtr<SGraphNode> FHueNodeFactory::CreateNode(UEdGraphNode* Node) const
         return nullptr;
     }
 
-    if (!FHueStyleResolver::IsSupportedNode(Node))
+    if (!FHueStyleResolver::CanStyleNode(Node))
     {
         return nullptr;
     }
@@ -95,6 +100,12 @@ TSharedPtr<SGraphNode> FHueNodeFactory::CreateNode(UEdGraphNode* Node) const
     {
         return nullptr;
     }
+
+    // Reaching Hue's registered node factory is itself the proof that the
+    // node did not pre-empt factories with CreateVisualWidget(). Mark support
+    // before construction so Hue's pin factory can tint exec pins while the
+    // Slate node is being built.
+    FHueStyleResolver::MarkVisualSupport(K2Node);
 
     // Keep this ordering aligned with Unreal's stock FNodeFactory so a broad
     // interface such as Add Pin never steals a more specialized presentation.

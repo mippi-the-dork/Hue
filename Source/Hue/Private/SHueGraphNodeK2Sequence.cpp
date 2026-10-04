@@ -5,6 +5,7 @@
 #include "EdGraph/EdGraph.h"
 #include "K2Node.h"
 #include "K2Node_AddPinInterface.h"
+#include "ScopedTransaction.h"
 #include "Widgets/SBoxPanel.h"
 
 #define LOCTEXT_NAMESPACE "HueGraphNodeK2Sequence"
@@ -55,16 +56,36 @@ FReply SHueGraphNodeK2Sequence::OnAddPin()
         return FReply::Handled();
     }
 
+    // Match Unreal's native SGraphNodeK2Sequence behavior. Add-pin nodes must
+    // participate in the editor transaction stack so Select, Sequence,
+    // MultiGate, Make Array/Set/Map, and other IK2Node_AddPinInterface nodes
+    // keep native Undo/Redo semantics while Hue owns their Slate wrapper.
+    const FScopedTransaction Transaction(
+        LOCTEXT("AddPinTransaction", "Add Pin"));
+
     Node->Modify();
     AddPinNode->AddInputPin();
+
+    UpdateGraphNode();
 
     if (UEdGraph* Graph = Node->GetGraph())
     {
         Graph->NotifyGraphChanged();
     }
 
-    UpdateGraphNode();
     return FReply::Handled();
+}
+
+EVisibility SHueGraphNodeK2Sequence::IsAddPinButtonVisible() const
+{
+    UK2Node* Node = Cast<UK2Node>(GraphNode);
+    IK2Node_AddPinInterface* AddPinNode = Node
+        ? Cast<IK2Node_AddPinInterface>(Node)
+        : nullptr;
+
+    return (AddPinNode && AddPinNode->CanAddPin())
+        ? EVisibility::Visible
+        : EVisibility::Collapsed;
 }
 
 #undef LOCTEXT_NAMESPACE

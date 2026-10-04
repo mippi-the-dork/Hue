@@ -1,4 +1,4 @@
-# Hue 0.12.1 Prototype
+# Hue 0.13.0 Prototype
 
 Hue is an Unreal Engine Editor plugin for user-defined visual style overrides on Blueprint nodes.
 
@@ -8,7 +8,7 @@ Hue does not modify Unreal Engine source files and does not replace Blueprint no
 
 Every visually meaningful Blueprint node should support Hue wherever technically safe.
 
-Hue preserves native node behavior first. When Unreal uses a specialized presentation, Hue either uses a dedicated compatible wrapper or lets Unreal build the native specialized widget and binds Hue only to safe visual layers.
+Hue preserves native node behavior first. When Unreal uses a specialized presentation, Hue either uses a dedicated compatible wrapper or lets Unreal build the native widget and binds Hue only to visual layers it can identify safely.
 
 ## Visual Channels
 
@@ -37,13 +37,38 @@ Category means the user-authored Category assigned to a Blueprint member in My B
 
 ## Broad K2 Coverage
 
-Hue supports the normal K2 presentation plus broad compact-node coverage, including compatible Array, Map, Set, subsystem, conversion, autocast, macro, and function-library nodes.
+Hue supports Unreal's normal K2 presentation plus compact nodes and Add Pin families.
+
+The broad default path covers nodes such as:
+
+- Branch and ordinary function calls
+- Cast To nodes
+- latent calls such as Delay
+- async-task K2 nodes that use the normal K2 presentation
+- Construct Object from Class
+- Add Component by Class
+- ForEachLoop and ForEachLoopWithBreak macro instances
+- compatible conversion/autocast nodes
 
 Compact nodes use one central fill, so Hue maps Header Color to that fill and uses Body Color as its fallback.
 
+## Add Pin Families
+
+Hue's Add Pin compatibility wrapper covers nodes implementing `IK2Node_AddPinInterface`, including:
+
+- Sequence
+- MultiGate
+- Select
+- Make Array
+- Make Set
+- Make Map
+- compatible commutative/add-pin operators
+
+Hue 0.13.0 brings this wrapper back in line with Unreal's native behavior by restoring the Add Pin transaction and native visibility rule. Adding a pin is now a normal Undo/Redo operation, and the button collapses when the node reports that another pin cannot be added.
+
 ## Specialized Coverage
 
-Dedicated Hue-compatible presentation paths currently cover:
+Dedicated Hue-compatible presentation paths cover:
 
 - Blueprint Events
 - Blueprint Variable Get and Set
@@ -54,7 +79,7 @@ Dedicated Hue-compatible presentation paths currently cover:
 - Format Text
 - collapsed graph / composite nodes
 
-Hue 0.12.1 adds a guarded native-specialized bridge for node families whose Slate renderers are private to Unreal's GraphEditor module:
+Hue also has a guarded native-specialized bridge for node families whose Slate renderers are private to Unreal's GraphEditor module:
 
 - Create Event / Create Delegate
 - Spawn Actor
@@ -65,32 +90,61 @@ Hue 0.12.1 adds a guarded native-specialized bridge for node families whose Slat
 
 For these families Unreal still constructs the native specialized widget. Hue then binds to the standard title, body, title-text, pin-label, and execution-pin visual layers it can identify safely. Native selectors, exposed-on-spawn controls, pin behavior, and other specialized interactions remain Unreal-owned.
 
+## Node-Owned Visual Widgets
+
+Some K2 nodes can bypass every registered graph-node factory by returning their own Slate widget from `CreateVisualWidget()`.
+
+Create Widget remains the known engine case Hue explicitly hooks during pin construction so its execution pins can participate in Hue. Hue 0.13.0 also adds a general compatibility fallback for any displayed K2 node that bypassed Hue's factory:
+
+1. Hue reaches the native displayed node only after Unreal has created it.
+2. Hue scans without changing the widget.
+3. Support is accepted only if both a compatible standard header and body surface are present.
+4. Only then does Hue attach its color attributes and mark the live node supported.
+5. If those surfaces are not present, the node remains untouched and Hue does not offer controls for it.
+
+This closes the false-positive case where a node could appear supported even though Hue had no usable visual surface to style.
+
+## Confirmed Visual Support
+
+Hue separates potential K2 capability from confirmed visual support.
+
+The Hue panel, right-click menu, and style mutation commands only treat a live node as supported after Hue has established one of these paths:
+
+- a Hue-owned compatible wrapper,
+- a validated native-specialized bridge,
+- or a validated node-owned native widget fallback.
+
+Known native-specialized bridges are now provisional during construction. If the finished native widget cannot be decorated, Hue retracts the support claim and its execution-pin widget falls back to Unreal's native color.
+
 ## Right-Click Menu
 
-Hue 0.12.1 registers its class-specific ToolMenu extensions even when Unreal has not registered the native menu yet. This is intentional: `UToolMenus::ExtendMenu()` supports late-created menus, which is important because Blueprint node context menus can be registered lazily.
+Hue registers class-specific ToolMenu extensions even when Unreal has not registered the native menu yet. This is intentional because Blueprint node context menus can be registered lazily.
 
-Hue now refreshes its menu extensions after a Blueprint editor opens and when editor modules load. It also extends the registered K2 parent context menu when available.
+Hue refreshes its menu extensions after a Blueprint editor opens and when editor modules load. It also extends the K2 parent context menu when available.
 
-Right-clicking a supported Blueprint node should expose the Hue submenu again.
+Right-clicking a supported Blueprint node should expose the Hue submenu.
 
-## Documentation Nodes
+## Documentation and Reroute Nodes
 
 Legacy Blueprint Documentation nodes are intentionally unsupported and completely ignored by Hue.
 
-Runtime testing in Unreal Engine 5.8.3 showed the native Documentation node itself can crash inside Unreal's UDN documentation renderer even with Hue disabled. Hue therefore does not intercept, style, add menus to, or otherwise interact with `UEdGraphNode_Documentation`.
+Reroute/Knot nodes are also intentionally excluded because Hue's current header/body channels do not map meaningfully to their control-point presentation.
 
-This is an intentional product exception rather than a pending Hue compatibility target.
+## Compatibility Sweep
 
-## Remaining Compatibility Work
+Hue 0.13.0 adds a formal compatibility matrix and regression plan covering:
 
-Known remaining areas include:
+- object construction
+- Add Pin families
+- Switch and control-flow nodes
+- macros and latent/async nodes
+- structs
+- containers
+- Cast nodes
+- selection/hover/error/breakpoint visuals
+- reconstruction, duplication, copy/paste, save/reopen, and Blueprint recompilation
 
-- Reroute/Knot nodes, where Hue's current header/body channels do not map meaningfully
-- node-owned custom `CreateVisualWidget()` implementations that bypass registered visual node factories
-- specialized third-party graph widgets outside the normal Blueprint K2 presentation path
-- any native-specialized node whose internal widget rebuild proves to require a dedicated Hue wrapper rather than the 0.12.1 bridge
-
-If a visually meaningful Blueprint node lacks Hue and can be supported without breaking native behavior, it remains a compatibility gap to investigate.
+See `Doc/Compatibility-Matrix.md` and `Doc/Prototype-Test-Plan.md`.
 
 ## Persistence
 
