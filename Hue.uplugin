@@ -1,0 +1,23 @@
+{
+    "FileVersion": 3,
+    "Version": 14,
+    "VersionName": "0.12.1",
+    "FriendlyName": "Hue",
+    "Description": "Adds editor-only Hue style overrides across standard, compact, and compatible specialized Blueprint node presentations.",
+    "Category": "Editor",
+    "CreatedBy": "Mippi the Dork",
+    "CanContainContent": false,
+    "IsBetaVersion": true,
+    "Installed": false,
+    "EngineVersion": "5.8.0",
+    "SupportedTargetPlatforms": [
+        "Win64"
+    ],
+    "Modules": [
+        {
+            "Name": "Hue",
+            "Type": "Editor",
+            "LoadingPhase": "PostEngineInit"
+        }
+    ]
+}
