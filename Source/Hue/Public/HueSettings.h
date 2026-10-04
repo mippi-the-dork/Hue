@@ -20,6 +20,7 @@ public:
 
 #if WITH_EDITOR
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+    virtual void PostEditUndo() override;
 #endif
 
     /** Project-shared styles. The property name is retained for config compatibility. */

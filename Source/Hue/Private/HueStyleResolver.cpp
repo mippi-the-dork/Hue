@@ -3,6 +3,7 @@
 #include "HueStyleResolver.h"
 
 #include "Blueprint/BlueprintExtension.h"
+#include "EdGraph/EdGraph.h"
 #include "EdGraph/EdGraphNode.h"
 #include "EdGraphSchema_K2.h"
 #include "Engine/Blueprint.h"
@@ -30,6 +31,7 @@
 #include "K2Node_Variable.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "ScopedTransaction.h"
+#include "SGraphNode.h"
 #include "UObject/Class.h"
 #include "UObject/UnrealType.h"
 
@@ -38,6 +40,48 @@
 namespace HueStyleResolverPrivate
 {
     static TSet<TWeakObjectPtr<UEdGraphNode>> VisuallySupportedNodes;
+    static TMap<TWeakObjectPtr<UEdGraphNode>, TWeakPtr<SGraphNode>> RejectedNativeFallbackWidgets;
+
+    static void RefreshCategoryTrackingAndMigrate(
+        UBlueprint* Blueprint,
+        UHueBlueprintExtension* Extension,
+        const FString& CurrentCategory);
+
+    static void PruneVisualSupportCaches()
+    {
+        for (auto It = VisuallySupportedNodes.CreateIterator(); It; ++It)
+        {
+            if (!It->IsValid())
+            {
+                It.RemoveCurrent();
+            }
+        }
+
+        for (auto It = RejectedNativeFallbackWidgets.CreateIterator(); It; ++It)
+        {
+            if (!It.Key().IsValid() || !It.Value().IsValid())
+            {
+                It.RemoveCurrent();
+            }
+        }
+    }
+
+    static void ClearRejectedFallbacksForBlueprint(const UBlueprint* Blueprint)
+    {
+        if (!Blueprint)
+        {
+            return;
+        }
+
+        for (auto It = RejectedNativeFallbackWidgets.CreateIterator(); It; ++It)
+        {
+            UEdGraphNode* Node = It.Key().Get();
+            if (!Node || FHueStyleResolver::GetOwningBlueprint(Node) == Blueprint)
+            {
+                It.RemoveCurrent();
+            }
+        }
+    }
 
     static void InvalidateHueWidgets()
     {
@@ -108,6 +152,11 @@ namespace HueStyleResolverPrivate
         {
             return nullptr;
         }
+
+        RefreshCategoryTrackingAndMigrate(
+            Blueprint,
+            Extension,
+            CategoryInfo.Category);
 
         if (FHueNodeStyleOverride* Existing = Extension->CategoryStyles.Find(CategoryInfo.Category))
         {
@@ -180,6 +229,11 @@ namespace HueStyleResolverPrivate
             return;
         }
 
+        RefreshCategoryTrackingAndMigrate(
+            Blueprint,
+            Extension,
+            CategoryInfo.Category);
+
         if (FHueNodeStyleOverride* Style = Extension->CategoryStyles.Find(CategoryInfo.Category))
         {
             if (Style->IsEmpty())
@@ -187,6 +241,70 @@ namespace HueStyleResolverPrivate
                 Extension->CategoryStyles.Remove(CategoryInfo.Category);
             }
         }
+    }
+
+
+    static FString GetScopeTargetKey(
+        const UEdGraphNode* Node,
+        EHueStyleScope Scope)
+    {
+        if (!Node || !FHueStyleResolver::IsSupportedNode(Node))
+        {
+            return FString();
+        }
+
+        if (Scope == EHueStyleScope::Instance)
+        {
+            const UBlueprint* Blueprint = FHueStyleResolver::GetOwningBlueprint(Node);
+            return Blueprint
+                ? FString::Printf(
+                    TEXT("Instance:%s:%s"),
+                    *Blueprint->GetPathName(),
+                    *Node->NodeGuid.ToString(EGuidFormats::DigitsWithHyphens))
+                : FString();
+        }
+
+        if (Scope == EHueStyleScope::Category)
+        {
+            FHueBlueprintCategoryInfo CategoryInfo;
+            if (!FHueStyleResolver::GetBlueprintCategoryInfo(Node, CategoryInfo)
+                || !CategoryInfo.DefiningBlueprint)
+            {
+                return FString();
+            }
+
+            return FString::Printf(
+                TEXT("Category:%s:%s"),
+                *CategoryInfo.DefiningBlueprint->GetPathName(),
+                *CategoryInfo.Category);
+        }
+
+        const FString GlobalKey = FHueStyleResolver::GetGlobalKey(Node);
+        return GlobalKey.IsEmpty()
+            ? FString()
+            : FString(TEXT("Global:")) + GlobalKey;
+    }
+
+    static TArray<UEdGraphNode*> GetUniqueScopeRepresentatives(
+        const TArray<UEdGraphNode*>& Nodes,
+        EHueStyleScope Scope)
+    {
+        TArray<UEdGraphNode*> Result;
+        TSet<FString> SeenTargets;
+
+        for (UEdGraphNode* Node : Nodes)
+        {
+            const FString TargetKey = GetScopeTargetKey(Node, Scope);
+            if (TargetKey.IsEmpty() || SeenTargets.Contains(TargetKey))
+            {
+                continue;
+            }
+
+            SeenTargets.Add(TargetKey);
+            Result.Add(Node);
+        }
+
+        return Result;
     }
 
     static bool ReadExplicitBlueprintCategory(
@@ -342,6 +460,577 @@ namespace HueStyleResolverPrivate
         OutInfo.Category = Category;
         return true;
     }
+
+    struct FCategoryTrackingState
+    {
+        TArray<FName> CategorySorting;
+        TMap<FString, FString> MemberFingerprints;
+    };
+
+    static TMap<TWeakObjectPtr<UBlueprint>, FCategoryTrackingState> CategoryTrackingStates;
+
+    static FString BuildCategoryMemberFingerprint(
+        UBlueprint* Blueprint,
+        const FString& Category)
+    {
+        if (!Blueprint || Category.IsEmpty())
+        {
+            return FString();
+        }
+
+        TArray<FString> MemberKeys;
+
+        auto AddGraphIfCategoryMatches =
+            [&MemberKeys, Blueprint, &Category](UEdGraph* Graph, const TCHAR* Prefix)
+            {
+                FHueBlueprintCategoryInfo Info;
+                if (Graph
+                    && ReadExplicitBlueprintCategory(Graph, Blueprint, Info)
+                    && Info.Category == Category)
+                {
+                    MemberKeys.Add(
+                        FString::Printf(
+                            TEXT("%s%s"),
+                            Prefix,
+                            *Graph->GetName()));
+                }
+            };
+
+        for (UEdGraph* Graph : Blueprint->FunctionGraphs)
+        {
+            AddGraphIfCategoryMatches(Graph, TEXT("Function:"));
+        }
+
+        for (UEdGraph* Graph : Blueprint->MacroGraphs)
+        {
+            AddGraphIfCategoryMatches(Graph, TEXT("Macro:"));
+        }
+
+        for (const FBPVariableDescription& Variable : Blueprint->NewVariables)
+        {
+            const FString VariableCategory =
+                Variable.Category.ToString().TrimStartAndEnd();
+
+            if (VariableCategory == Category)
+            {
+                MemberKeys.Add(
+                    FString::Printf(
+                        TEXT("Variable:%s"),
+                        *Variable.VarGuid.ToString(EGuidFormats::DigitsWithHyphens)));
+            }
+        }
+
+        TArray<UEdGraph*> AllGraphs;
+        Blueprint->GetAllGraphs(AllGraphs);
+
+        for (UEdGraph* Graph : AllGraphs)
+        {
+            if (!Graph)
+            {
+                continue;
+            }
+
+            for (UEdGraphNode* GraphNode : Graph->Nodes)
+            {
+                const UK2Node_Event* EventNode = Cast<UK2Node_Event>(GraphNode);
+                if (!EventNode)
+                {
+                    continue;
+                }
+
+                FHueBlueprintCategoryInfo EventInfo;
+                if (ReadExplicitBlueprintEventCategory(EventNode, EventInfo)
+                    && EventInfo.DefiningBlueprint == Blueprint
+                    && EventInfo.Category == Category)
+                {
+                    MemberKeys.Add(
+                        FString::Printf(
+                            TEXT("Event:%s"),
+                            *EventNode->NodeGuid.ToString(EGuidFormats::DigitsWithHyphens)));
+                }
+            }
+        }
+
+        MemberKeys.Sort();
+        return FString::Join(MemberKeys, TEXT("|"));
+    }
+
+    static int32 CountFingerprintMembers(const FString& Fingerprint)
+    {
+        if (Fingerprint.IsEmpty())
+        {
+            return 0;
+        }
+
+        int32 Count = 1;
+        for (TCHAR Character : Fingerprint)
+        {
+            if (Character == TEXT('|'))
+            {
+                ++Count;
+            }
+        }
+        return Count;
+    }
+
+    static void CollectBlueprintMemberCategories(
+        UBlueprint* Blueprint,
+        TSet<FString>& OutCategories)
+    {
+        OutCategories.Reset();
+
+        if (!Blueprint)
+        {
+            return;
+        }
+
+        auto AddGraphCategory =
+            [&OutCategories, Blueprint](UEdGraph* Graph)
+            {
+                FHueBlueprintCategoryInfo Info;
+                if (Graph
+                    && ReadExplicitBlueprintCategory(Graph, Blueprint, Info)
+                    && !Info.Category.IsEmpty())
+                {
+                    OutCategories.Add(Info.Category);
+                }
+            };
+
+        for (UEdGraph* Graph : Blueprint->FunctionGraphs)
+        {
+            AddGraphCategory(Graph);
+        }
+
+        for (UEdGraph* Graph : Blueprint->MacroGraphs)
+        {
+            AddGraphCategory(Graph);
+        }
+
+        for (const FBPVariableDescription& Variable : Blueprint->NewVariables)
+        {
+            const FString Category =
+                Variable.Category.ToString().TrimStartAndEnd();
+            if (!Category.IsEmpty()
+                && !FText::FromString(Category).EqualTo(UEdGraphSchema_K2::VR_DefaultCategory))
+            {
+                OutCategories.Add(Category);
+            }
+        }
+
+        TArray<UEdGraph*> AllGraphs;
+        Blueprint->GetAllGraphs(AllGraphs);
+        for (UEdGraph* Graph : AllGraphs)
+        {
+            if (!Graph)
+            {
+                continue;
+            }
+
+            for (UEdGraphNode* GraphNode : Graph->Nodes)
+            {
+                const UK2Node_Event* EventNode = Cast<UK2Node_Event>(GraphNode);
+                if (!EventNode)
+                {
+                    continue;
+                }
+
+                FHueBlueprintCategoryInfo EventInfo;
+                if (ReadExplicitBlueprintEventCategory(EventNode, EventInfo)
+                    && EventInfo.DefiningBlueprint == Blueprint
+                    && !EventInfo.Category.IsEmpty())
+                {
+                    OutCategories.Add(EventInfo.Category);
+                }
+            }
+        }
+    }
+
+    static void MergeStyleWithoutOverwriting(
+        FHueNodeStyleOverride& Destination,
+        const FHueNodeStyleOverride& Source)
+    {
+        if (!Destination.bOverrideHeaderColor && Source.bOverrideHeaderColor)
+        {
+            Destination.bOverrideHeaderColor = true;
+            Destination.HeaderColor = Source.HeaderColor;
+        }
+
+        if (!Destination.bOverrideHeaderTextColor && Source.bOverrideHeaderTextColor)
+        {
+            Destination.bOverrideHeaderTextColor = true;
+            Destination.HeaderTextColor = Source.HeaderTextColor;
+        }
+
+        if (!Destination.bOverrideBodyColor && Source.bOverrideBodyColor)
+        {
+            Destination.bOverrideBodyColor = true;
+            Destination.BodyColor = Source.BodyColor;
+        }
+
+        if (!Destination.bOverrideBodyTextColor && Source.bOverrideBodyTextColor)
+        {
+            Destination.bOverrideBodyTextColor = true;
+            Destination.BodyTextColor = Source.BodyTextColor;
+        }
+    }
+
+    static bool MigrateCategoryStyle(
+        UBlueprint* Blueprint,
+        UHueBlueprintExtension* Extension,
+        const FString& OldCategory,
+        const FString& NewCategory)
+    {
+        if (!Blueprint
+            || !Extension
+            || OldCategory.IsEmpty()
+            || NewCategory.IsEmpty()
+            || OldCategory == NewCategory)
+        {
+            return false;
+        }
+
+        const FHueNodeStyleOverride* OldStyle =
+            Extension->CategoryStyles.Find(OldCategory);
+        if (!OldStyle)
+        {
+            return false;
+        }
+
+        const FHueNodeStyleOverride StyleCopy = *OldStyle;
+
+        Blueprint->Modify();
+        Extension->Modify();
+
+        if (FHueNodeStyleOverride* ExistingTarget =
+            Extension->CategoryStyles.Find(NewCategory))
+        {
+            // A rename can merge into an existing category. Preserve the
+            // destination rule on conflicts and fill only channels it did not
+            // already override.
+            MergeStyleWithoutOverwriting(*ExistingTarget, StyleCopy);
+        }
+        else
+        {
+            Extension->CategoryStyles.Add(NewCategory, StyleCopy);
+        }
+
+        Extension->CategoryStyles.Remove(OldCategory);
+        Blueprint->MarkPackageDirty();
+        return true;
+    }
+
+    struct FCategoryRenamePair
+    {
+        FString OldCategory;
+        FString NewCategory;
+
+        bool operator==(const FCategoryRenamePair& Other) const
+        {
+            return OldCategory == Other.OldCategory
+                && NewCategory == Other.NewCategory;
+        }
+    };
+
+    static TArray<FCategoryRenamePair> DetectCategorySortRenames(
+        const TArray<FName>& PreviousSorting,
+        const TArray<FName>& CurrentSorting)
+    {
+        TSet<FName> PreviousSet;
+        TSet<FName> CurrentSet;
+        for (const FName& Name : PreviousSorting)
+        {
+            PreviousSet.Add(Name);
+        }
+        for (const FName& Name : CurrentSorting)
+        {
+            CurrentSet.Add(Name);
+        }
+
+        TArray<FName> Removed;
+        TArray<FName> Added;
+        for (const FName& Name : PreviousSorting)
+        {
+            if (!CurrentSet.Contains(Name))
+            {
+                Removed.Add(Name);
+            }
+        }
+        for (const FName& Name : CurrentSorting)
+        {
+            if (!PreviousSet.Contains(Name))
+            {
+                Added.Add(Name);
+            }
+        }
+
+        TArray<FCategoryRenamePair> Result;
+
+        if (Removed.Num() == 1 && Added.Num() == 1)
+        {
+            FCategoryRenamePair Pair;
+            Pair.OldCategory = Removed[0].ToString();
+            Pair.NewCategory = Added[0].ToString();
+            Result.Add(Pair);
+            return Result;
+        }
+
+        // A category rename normally preserves its sort slot. This also lets
+        // nested-category renames produce several reliable old/new pairs while
+        // a pure reorder (same name set) produces none.
+        const int32 CommonCount = FMath::Min(
+            PreviousSorting.Num(),
+            CurrentSorting.Num());
+
+        for (int32 Index = 0; Index < CommonCount; ++Index)
+        {
+            const FName OldName = PreviousSorting[Index];
+            const FName NewName = CurrentSorting[Index];
+
+            if (OldName != NewName
+                && !CurrentSet.Contains(OldName)
+                && !PreviousSet.Contains(NewName))
+            {
+                FCategoryRenamePair Pair;
+                Pair.OldCategory = OldName.ToString();
+                Pair.NewCategory = NewName.ToString();
+                Result.AddUnique(Pair);
+            }
+        }
+
+        return Result;
+    }
+
+    static bool TryApplyCategoryRenamePairs(
+        UBlueprint* Blueprint,
+        UHueBlueprintExtension* Extension,
+        const TArray<FCategoryRenamePair>& RenamePairs)
+    {
+        if (!Blueprint || !Extension || RenamePairs.IsEmpty())
+        {
+            return false;
+        }
+
+        TArray<FString> ExistingStyleKeys;
+        Extension->CategoryStyles.GetKeys(ExistingStyleKeys);
+
+        bool bMigratedAny = false;
+
+        for (const FString& ExistingKey : ExistingStyleKeys)
+        {
+            for (const FCategoryRenamePair& Pair : RenamePairs)
+            {
+                FString TargetKey;
+
+                if (ExistingKey == Pair.OldCategory)
+                {
+                    TargetKey = Pair.NewCategory;
+                }
+                else
+                {
+                    const FString OldPrefix = Pair.OldCategory + TEXT("|");
+                    if (ExistingKey.StartsWith(OldPrefix))
+                    {
+                        TargetKey = Pair.NewCategory + ExistingKey.Mid(Pair.OldCategory.Len());
+                    }
+                }
+
+                if (!TargetKey.IsEmpty())
+                {
+                    bMigratedAny |= MigrateCategoryStyle(
+                        Blueprint,
+                        Extension,
+                        ExistingKey,
+                        TargetKey);
+                    break;
+                }
+            }
+        }
+
+        return bMigratedAny;
+    }
+
+    static void CaptureCategoryTrackingState(
+        UBlueprint* Blueprint,
+        UHueBlueprintExtension* Extension,
+        FCategoryTrackingState& State)
+    {
+        if (!Blueprint || !Extension)
+        {
+            return;
+        }
+
+        State.CategorySorting = Blueprint->CategorySorting;
+        State.MemberFingerprints.Reset();
+
+        for (const TPair<FString, FHueNodeStyleOverride>& Pair :
+            Extension->CategoryStyles)
+        {
+            State.MemberFingerprints.Add(
+                Pair.Key,
+                BuildCategoryMemberFingerprint(Blueprint, Pair.Key));
+        }
+    }
+
+    static void RefreshCategoryTrackingAndMigrate(
+        UBlueprint* Blueprint,
+        UHueBlueprintExtension* Extension,
+        const FString& CurrentCategory)
+    {
+        if (!Blueprint || !Extension)
+        {
+            return;
+        }
+
+        // Opportunistically prune unloaded Blueprint keys.
+        for (auto It = CategoryTrackingStates.CreateIterator(); It; ++It)
+        {
+            if (!It.Key().IsValid())
+            {
+                It.RemoveCurrent();
+            }
+        }
+
+        const TWeakObjectPtr<UBlueprint> BlueprintKey(Blueprint);
+        FCategoryTrackingState* ExistingState =
+            CategoryTrackingStates.Find(BlueprintKey);
+
+        if (!ExistingState)
+        {
+            FCategoryTrackingState NewState;
+            CaptureCategoryTrackingState(Blueprint, Extension, NewState);
+            CategoryTrackingStates.Add(BlueprintKey, MoveTemp(NewState));
+            return;
+        }
+
+        const TArray<FCategoryRenamePair> RenamePairs =
+            DetectCategorySortRenames(
+                ExistingState->CategorySorting,
+                Blueprint->CategorySorting);
+
+        bool bMigrated = TryApplyCategoryRenamePairs(
+            Blueprint,
+            Extension,
+            RenamePairs);
+
+        // Some Blueprints do not have useful entries in CategorySorting. As a
+        // fallback, compare the durable members that made up a styled category.
+        // Requiring at least two members avoids treating a one-member drag to a
+        // different category as a category rename. Single-member renames still
+        // migrate when Unreal records the rename in CategorySorting.
+        if (!CurrentCategory.IsEmpty()
+            && !Extension->CategoryStyles.Contains(CurrentCategory))
+        {
+            const FString CurrentFingerprint =
+                BuildCategoryMemberFingerprint(Blueprint, CurrentCategory);
+
+            if (!CurrentFingerprint.IsEmpty())
+            {
+                TArray<FString> ExistingStyleKeys;
+                Extension->CategoryStyles.GetKeys(ExistingStyleKeys);
+
+                for (const FString& OldCategory : ExistingStyleKeys)
+                {
+                    if (OldCategory == CurrentCategory)
+                    {
+                        continue;
+                    }
+
+                    const FString* PreviousFingerprint =
+                        ExistingState->MemberFingerprints.Find(OldCategory);
+
+                    if (!PreviousFingerprint
+                        || *PreviousFingerprint != CurrentFingerprint
+                        || CountFingerprintMembers(*PreviousFingerprint) < 2)
+                    {
+                        continue;
+                    }
+
+                    const FString OldCurrentFingerprint =
+                        BuildCategoryMemberFingerprint(Blueprint, OldCategory);
+
+                    if (!OldCurrentFingerprint.IsEmpty())
+                    {
+                        continue;
+                    }
+
+                    bMigrated |= MigrateCategoryStyle(
+                        Blueprint,
+                        Extension,
+                        OldCategory,
+                        CurrentCategory);
+                    break;
+                }
+            }
+        }
+        else if (CurrentCategory.IsEmpty() && !bMigrated)
+        {
+            // Event-driven refreshes do not have one current node/category to
+            // nominate. Preserve the old fingerprint fallback by comparing the
+            // previously styled category membership against every category that
+            // exists after the Blueprint change. Requiring at least two members
+            // keeps a one-member category move from being guessed as a rename.
+            TSet<FString> CurrentCategories;
+            CollectBlueprintMemberCategories(Blueprint, CurrentCategories);
+
+            TArray<FString> ExistingStyleKeys;
+            Extension->CategoryStyles.GetKeys(ExistingStyleKeys);
+
+            for (const FString& OldCategory : ExistingStyleKeys)
+            {
+                const FString* PreviousFingerprint =
+                    ExistingState->MemberFingerprints.Find(OldCategory);
+                if (!PreviousFingerprint
+                    || PreviousFingerprint->IsEmpty()
+                    || CountFingerprintMembers(*PreviousFingerprint) < 2)
+                {
+                    continue;
+                }
+
+                if (!BuildCategoryMemberFingerprint(Blueprint, OldCategory).IsEmpty())
+                {
+                    continue;
+                }
+
+                FString MatchingCategory;
+                int32 MatchingCount = 0;
+                for (const FString& Candidate : CurrentCategories)
+                {
+                    if (Candidate == OldCategory
+                        || Extension->CategoryStyles.Contains(Candidate))
+                    {
+                        continue;
+                    }
+
+                    if (BuildCategoryMemberFingerprint(Blueprint, Candidate)
+                        == *PreviousFingerprint)
+                    {
+                        MatchingCategory = Candidate;
+                        ++MatchingCount;
+                        if (MatchingCount > 1)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (MatchingCount == 1)
+                {
+                    bMigrated |= MigrateCategoryStyle(
+                        Blueprint,
+                        Extension,
+                        OldCategory,
+                        MatchingCategory);
+                }
+            }
+        }
+
+        CaptureCategoryTrackingState(Blueprint, Extension, *ExistingState);
+
+        if (bMigrated)
+        {
+            InvalidateHueWidgets();
+        }
+    }
 }
 
 bool FHueStyleResolver::UsesSelfVisualBridge(const UEdGraphNode* Node)
@@ -367,18 +1056,10 @@ void FHueStyleResolver::MarkVisualSupport(UEdGraphNode* Node)
         return;
     }
 
-    HueStyleResolverPrivate::VisuallySupportedNodes.Add(Node);
-
-    // Opportunistically prune dead weak entries. This registry is editor-only
-    // and normally tiny, but keeping it clean avoids stale support claims after
-    // Blueprint recompiles/reinstances.
-    for (auto It = HueStyleResolverPrivate::VisuallySupportedNodes.CreateIterator(); It; ++It)
-    {
-        if (!It->IsValid())
-        {
-            It.RemoveCurrent();
-        }
-    }
+    const TWeakObjectPtr<UEdGraphNode> WeakNode(Node);
+    HueStyleResolverPrivate::VisuallySupportedNodes.Add(WeakNode);
+    HueStyleResolverPrivate::RejectedNativeFallbackWidgets.Remove(WeakNode);
+    HueStyleResolverPrivate::PruneVisualSupportCaches();
 }
 
 void FHueStyleResolver::UnmarkVisualSupport(UEdGraphNode* Node)
@@ -388,8 +1069,18 @@ void FHueStyleResolver::UnmarkVisualSupport(UEdGraphNode* Node)
         return;
     }
 
-    HueStyleResolverPrivate::VisuallySupportedNodes.Remove(
-        TWeakObjectPtr<UEdGraphNode>(Node));
+    const TWeakObjectPtr<UEdGraphNode> WeakNode(Node);
+    HueStyleResolverPrivate::VisuallySupportedNodes.Remove(WeakNode);
+
+    // If Unreal already produced a displayed widget and Hue could not decorate
+    // it, remember that negative result. Otherwise IsSupportedNode() would walk
+    // the same Slate subtree again every panel tick and context-menu query.
+    if (TSharedPtr<SGraphNode> DisplayedWidget = Node->DEPRECATED_NodeWidget.Pin())
+    {
+        HueStyleResolverPrivate::RejectedNativeFallbackWidgets.Add(
+            WeakNode,
+            DisplayedWidget);
+    }
 }
 
 bool FHueStyleResolver::IsSupportedNode(const UEdGraphNode* Node)
@@ -407,6 +1098,26 @@ bool FHueStyleResolver::IsSupportedNode(const UEdGraphNode* Node)
         return true;
     }
 
+    if (TWeakPtr<SGraphNode>* RejectedWidget =
+        HueStyleResolverPrivate::RejectedNativeFallbackWidgets.Find(WeakNode))
+    {
+        const TSharedPtr<SGraphNode> CurrentWidget =
+            const_cast<UEdGraphNode*>(Node)->DEPRECATED_NodeWidget.Pin();
+        const TSharedPtr<SGraphNode> PreviousRejectedWidget = RejectedWidget->Pin();
+
+        // Keep the negative result only for the exact Slate presentation that
+        // failed. If another graph panel or reconstruction gives the same node
+        // a different widget, allow that presentation to prove compatibility.
+        if (CurrentWidget.IsValid()
+            && PreviousRejectedWidget.IsValid()
+            && CurrentWidget == PreviousRejectedWidget)
+        {
+            return false;
+        }
+
+        HueStyleResolverPrivate::RejectedNativeFallbackWidgets.Remove(WeakNode);
+    }
+
     // A K2 node can bypass every registered graph-node factory by returning
     // its own widget from UEdGraphNode::CreateVisualWidget(). When the native
     // widget is already on screen, opportunistically test whether it exposes
@@ -417,11 +1128,27 @@ bool FHueStyleResolver::IsSupportedNode(const UEdGraphNode* Node)
     // compatibility path without hardcoding each class name.
     UK2Node* MutableK2Node = Cast<UK2Node>(
         const_cast<UEdGraphNode*>(Node));
-    if (MutableK2Node
-        && FHueNativeNodeDecorator::ApplyToDisplayedNode(MutableK2Node))
+    if (MutableK2Node)
     {
-        MarkVisualSupport(MutableK2Node);
-        return true;
+        const bool bHasDisplayedWidget =
+            MutableK2Node->DEPRECATED_NodeWidget.IsValid();
+
+        if (FHueNativeNodeDecorator::ApplyToDisplayedNode(MutableK2Node))
+        {
+            MarkVisualSupport(MutableK2Node);
+            return true;
+        }
+
+        if (bHasDisplayedWidget)
+        {
+            if (TSharedPtr<SGraphNode> DisplayedWidget =
+                MutableK2Node->DEPRECATED_NodeWidget.Pin())
+            {
+                HueStyleResolverPrivate::RejectedNativeFallbackWidgets.Add(
+                    WeakNode,
+                    DisplayedWidget);
+            }
+        }
     }
 
     return false;
@@ -1009,6 +1736,50 @@ UHueBlueprintExtension* FHueStyleResolver::GetOrCreateBlueprintExtension(
     return Extension;
 }
 
+void FHueStyleResolver::PrimeCategoryTracking(UBlueprint* Blueprint)
+{
+    if (!Blueprint)
+    {
+        return;
+    }
+
+    if (UHueBlueprintExtension* Extension = FindBlueprintExtension(Blueprint))
+    {
+        HueStyleResolverPrivate::RefreshCategoryTrackingAndMigrate(
+            Blueprint,
+            Extension,
+            FString());
+    }
+}
+
+void FHueStyleResolver::NotifyBlueprintChanged(
+    UBlueprint* Blueprint,
+    bool bPresentationMayHaveRebuilt)
+{
+    if (!Blueprint)
+    {
+        return;
+    }
+
+    // A compile/reconstruction can replace a custom node's displayed Slate
+    // widget while retaining the UObject node. Only clear negative presentation
+    // probes for those rebuild boundaries. Ordinary Blueprint changes should
+    // keep the cache hot.
+    if (bPresentationMayHaveRebuilt)
+    {
+        HueStyleResolverPrivate::ClearRejectedFallbacksForBlueprint(Blueprint);
+    }
+    HueStyleResolverPrivate::PruneVisualSupportCaches();
+
+    if (UHueBlueprintExtension* Extension = FindBlueprintExtension(Blueprint))
+    {
+        HueStyleResolverPrivate::RefreshCategoryTrackingAndMigrate(
+            Blueprint,
+            Extension,
+            FString());
+    }
+}
+
 bool FHueStyleResolver::TryGetScopeStyle(
     const UEdGraphNode* Node,
     EHueStyleScope Scope,
@@ -1053,6 +1824,9 @@ bool FHueStyleResolver::TryGetScopeStyle(
         return false;
     }
 
+    // Category rename migration is driven by UBlueprint change notifications.
+    // Keep normal style resolution lookup-only so Slate paint/layout requests
+    // never scan the Blueprint's category/member structure.
     OutStyle = Extension->CategoryStyles.Find(CategoryInfo.Category);
     return OutStyle != nullptr;
 }
@@ -1070,8 +1844,7 @@ bool FHueStyleResolver::ResolveColor(
         return true;
     }
 
-    if (TryGetScopeStyle(Node, EHueStyleScope::Category, Style)
-        && TryGetColor(*Style, Channel, OutColor))
+    if (GetEffectiveCategoryColor(Node, Channel, OutColor))
     {
         return true;
     }
@@ -1137,8 +1910,7 @@ FLinearColor FHueStyleResolver::GetPickerInitialColor(
 
     if (Scope == EHueStyleScope::Instance)
     {
-        if (TryGetScopeStyle(Node, EHueStyleScope::Category, Style)
-            && TryGetColor(*Style, Channel, Color))
+        if (GetEffectiveCategoryColor(Node, Channel, Color))
         {
             return Color;
         }
@@ -1151,6 +1923,14 @@ FLinearColor FHueStyleResolver::GetPickerInitialColor(
     }
     else if (Scope == EHueStyleScope::Category)
     {
+        // The exact Category was checked above. If this channel is not
+        // explicitly overridden there, inherit from the nearest parent before
+        // falling through to the Global rule.
+        if (GetEffectiveCategoryColor(Node, Channel, Color, nullptr, false))
+        {
+            return Color;
+        }
+
         if (TryGetScopeStyle(Node, EHueStyleScope::GlobalFunction, Style)
             && TryGetColor(*Style, Channel, Color))
         {
@@ -1167,39 +1947,12 @@ void FHueStyleResolver::SetColorOverride(
     EHueStyleChannel Channel,
     const FLinearColor& Color)
 {
-    if (!Node || !IsSupportedNode(Node))
+    TArray<UEdGraphNode*> Nodes;
+    if (Node)
     {
-        return;
+        Nodes.Add(Node);
     }
-
-    TUniquePtr<FScopedTransaction> Transaction;
-
-    if (Scope != EHueStyleScope::GlobalFunction)
-    {
-        UBlueprint* Blueprint = GetScopeBlueprint(Node, Scope);
-        if (!Blueprint)
-        {
-            return;
-        }
-
-        Transaction = MakeUnique<FScopedTransaction>(
-            LOCTEXT("SetHueStyle", "Set Hue Style"));
-
-        Blueprint->Modify();
-
-        if (UHueBlueprintExtension* Extension = GetOrCreateBlueprintExtension(Blueprint))
-        {
-            Extension->Modify();
-        }
-    }
-
-    if (FHueNodeStyleOverride* Style =
-        HueStyleResolverPrivate::GetMutableScopeStyle(Node, Scope, true))
-    {
-        SetColor(*Style, Channel, Color);
-        HueStyleResolverPrivate::SaveScope(Node, Scope);
-        HueStyleResolverPrivate::InvalidateHueWidgets();
-    }
+    SetColorOverrides(Nodes, Scope, Channel, Color);
 }
 
 void FHueStyleResolver::ClearColorOverride(
@@ -1207,91 +1960,369 @@ void FHueStyleResolver::ClearColorOverride(
     EHueStyleScope Scope,
     EHueStyleChannel Channel)
 {
-    if (!Node || !IsSupportedNode(Node))
+    TArray<UEdGraphNode*> Nodes;
+    if (Node)
     {
-        return;
+        Nodes.Add(Node);
     }
-
-    TUniquePtr<FScopedTransaction> Transaction;
-
-    if (Scope != EHueStyleScope::GlobalFunction)
-    {
-        UBlueprint* Blueprint = GetScopeBlueprint(Node, Scope);
-        if (!Blueprint)
-        {
-            return;
-        }
-
-        Transaction = MakeUnique<FScopedTransaction>(
-            LOCTEXT("ClearHueStyle", "Clear Hue Style"));
-
-        Blueprint->Modify();
-
-        if (UHueBlueprintExtension* Extension = FindBlueprintExtension(Blueprint))
-        {
-            Extension->Modify();
-        }
-    }
-
-    if (FHueNodeStyleOverride* Style =
-        HueStyleResolverPrivate::GetMutableScopeStyle(Node, Scope, false))
-    {
-        ClearColor(*Style, Channel);
-        HueStyleResolverPrivate::RemoveEmptyStyle(Node, Scope);
-        HueStyleResolverPrivate::SaveScope(Node, Scope);
-        HueStyleResolverPrivate::InvalidateHueWidgets();
-    }
+    ClearColorOverrides(Nodes, Scope, Channel);
 }
 
 void FHueStyleResolver::ClearAllOverrides(
     UEdGraphNode* Node,
     EHueStyleScope Scope)
 {
-    if (!Node || !IsSupportedNode(Node))
+    TArray<UEdGraphNode*> Nodes;
+    if (Node)
     {
-        return;
+        Nodes.Add(Node);
     }
+    ClearAllOverrides(Nodes, Scope);
+}
 
-    if (Scope == EHueStyleScope::GlobalFunction)
-    {
-        UHueSettings* Settings = GetMutableDefault<UHueSettings>();
-        Settings->GlobalFunctionStyles.Remove(GetGlobalKey(Node));
-        Settings->SaveConfig();
-        HueStyleResolverPrivate::InvalidateHueWidgets();
-        return;
-    }
+void FHueStyleResolver::SetColorOverrides(
+    const TArray<UEdGraphNode*>& Nodes,
+    EHueStyleScope Scope,
+    EHueStyleChannel Channel,
+    const FLinearColor& Color)
+{
+    const TArray<UEdGraphNode*> Targets =
+        HueStyleResolverPrivate::GetUniqueScopeRepresentatives(Nodes, Scope);
 
-    UBlueprint* Blueprint = GetScopeBlueprint(Node, Scope);
-    UHueBlueprintExtension* Extension = FindBlueprintExtension(Blueprint);
-
-    if (!Blueprint || !Extension)
+    if (Targets.IsEmpty())
     {
         return;
     }
 
     const FScopedTransaction Transaction(
-        LOCTEXT("ClearHueStyleScope", "Clear Hue Style"));
+        Targets.Num() > 1
+            ? LOCTEXT("SetHueStylesBatch", "Set Hue Styles")
+            : LOCTEXT("SetHueStyle", "Set Hue Style"));
 
-    Blueprint->Modify();
-    Extension->Modify();
+    TSet<UBlueprint*> ModifiedBlueprints;
+    UHueSettings* Settings = nullptr;
 
-    if (Scope == EHueStyleScope::Instance)
+    if (Scope == EHueStyleScope::GlobalFunction)
     {
-        Extension->InstanceStyles.Remove(Node->NodeGuid);
+        Settings = GetMutableDefault<UHueSettings>();
+        Settings->SetFlags(RF_Transactional);
+        Settings->Modify();
     }
-    else
+
+    for (UEdGraphNode* Node : Targets)
     {
-        FHueBlueprintCategoryInfo CategoryInfo;
-        if (!GetBlueprintCategoryInfo(Node, CategoryInfo))
+        if (Scope != EHueStyleScope::GlobalFunction)
         {
-            return;
+            UBlueprint* Blueprint = GetScopeBlueprint(Node, Scope);
+            if (!Blueprint)
+            {
+                continue;
+            }
+
+            if (!ModifiedBlueprints.Contains(Blueprint))
+            {
+                Blueprint->Modify();
+                ModifiedBlueprints.Add(Blueprint);
+            }
+
+            if (UHueBlueprintExtension* Extension =
+                GetOrCreateBlueprintExtension(Blueprint))
+            {
+                Extension->Modify();
+            }
         }
 
-        Extension->CategoryStyles.Remove(CategoryInfo.Category);
+        if (FHueNodeStyleOverride* Style =
+            HueStyleResolverPrivate::GetMutableScopeStyle(Node, Scope, true))
+        {
+            SetColor(*Style, Channel, Color);
+        }
     }
 
-    Blueprint->MarkPackageDirty();
+    if (Settings)
+    {
+        Settings->SaveConfig();
+    }
+
+    for (UBlueprint* Blueprint : ModifiedBlueprints)
+    {
+        if (Scope == EHueStyleScope::Category)
+        {
+            if (UHueBlueprintExtension* Extension = FindBlueprintExtension(Blueprint))
+            {
+                HueStyleResolverPrivate::RefreshCategoryTrackingAndMigrate(
+                    Blueprint,
+                    Extension,
+                    FString());
+            }
+        }
+
+        Blueprint->MarkPackageDirty();
+    }
+
     HueStyleResolverPrivate::InvalidateHueWidgets();
+}
+
+void FHueStyleResolver::ClearColorOverrides(
+    const TArray<UEdGraphNode*>& Nodes,
+    EHueStyleScope Scope,
+    EHueStyleChannel Channel)
+{
+    const TArray<UEdGraphNode*> Targets =
+        HueStyleResolverPrivate::GetUniqueScopeRepresentatives(Nodes, Scope);
+
+    if (Targets.IsEmpty())
+    {
+        return;
+    }
+
+    const FScopedTransaction Transaction(
+        Targets.Num() > 1
+            ? LOCTEXT("ClearHueStylesBatch", "Clear Hue Styles")
+            : LOCTEXT("ClearHueStyle", "Clear Hue Style"));
+
+    TSet<UBlueprint*> ModifiedBlueprints;
+    UHueSettings* Settings = nullptr;
+
+    if (Scope == EHueStyleScope::GlobalFunction)
+    {
+        Settings = GetMutableDefault<UHueSettings>();
+        Settings->SetFlags(RF_Transactional);
+        Settings->Modify();
+    }
+
+    for (UEdGraphNode* Node : Targets)
+    {
+        if (Scope != EHueStyleScope::GlobalFunction)
+        {
+            UBlueprint* Blueprint = GetScopeBlueprint(Node, Scope);
+            if (!Blueprint)
+            {
+                continue;
+            }
+
+            if (!ModifiedBlueprints.Contains(Blueprint))
+            {
+                Blueprint->Modify();
+                ModifiedBlueprints.Add(Blueprint);
+            }
+
+            if (UHueBlueprintExtension* Extension =
+                FindBlueprintExtension(Blueprint))
+            {
+                Extension->Modify();
+            }
+        }
+
+        if (FHueNodeStyleOverride* Style =
+            HueStyleResolverPrivate::GetMutableScopeStyle(Node, Scope, false))
+        {
+            ClearColor(*Style, Channel);
+            HueStyleResolverPrivate::RemoveEmptyStyle(Node, Scope);
+        }
+    }
+
+    if (Settings)
+    {
+        Settings->SaveConfig();
+    }
+
+    for (UBlueprint* Blueprint : ModifiedBlueprints)
+    {
+        if (Scope == EHueStyleScope::Category)
+        {
+            if (UHueBlueprintExtension* Extension = FindBlueprintExtension(Blueprint))
+            {
+                HueStyleResolverPrivate::RefreshCategoryTrackingAndMigrate(
+                    Blueprint,
+                    Extension,
+                    FString());
+            }
+        }
+
+        Blueprint->MarkPackageDirty();
+    }
+
+    HueStyleResolverPrivate::InvalidateHueWidgets();
+}
+
+void FHueStyleResolver::ClearAllOverrides(
+    const TArray<UEdGraphNode*>& Nodes,
+    EHueStyleScope Scope)
+{
+    const TArray<UEdGraphNode*> Targets =
+        HueStyleResolverPrivate::GetUniqueScopeRepresentatives(Nodes, Scope);
+
+    if (Targets.IsEmpty())
+    {
+        return;
+    }
+
+    const FScopedTransaction Transaction(
+        Targets.Num() > 1
+            ? LOCTEXT("ClearHueScopesBatch", "Clear Hue Overrides")
+            : LOCTEXT("ClearHueStyleScope", "Clear Hue Style"));
+
+    TSet<UBlueprint*> ModifiedBlueprints;
+    UHueSettings* Settings = nullptr;
+
+    if (Scope == EHueStyleScope::GlobalFunction)
+    {
+        Settings = GetMutableDefault<UHueSettings>();
+        Settings->SetFlags(RF_Transactional);
+        Settings->Modify();
+    }
+
+    for (UEdGraphNode* Node : Targets)
+    {
+        if (Scope == EHueStyleScope::GlobalFunction)
+        {
+            Settings->GlobalFunctionStyles.Remove(GetGlobalKey(Node));
+            continue;
+        }
+
+        UBlueprint* Blueprint = GetScopeBlueprint(Node, Scope);
+        UHueBlueprintExtension* Extension = FindBlueprintExtension(Blueprint);
+
+        if (!Blueprint || !Extension)
+        {
+            continue;
+        }
+
+        if (!ModifiedBlueprints.Contains(Blueprint))
+        {
+            Blueprint->Modify();
+            ModifiedBlueprints.Add(Blueprint);
+        }
+
+        Extension->Modify();
+
+        if (Scope == EHueStyleScope::Instance)
+        {
+            Extension->InstanceStyles.Remove(Node->NodeGuid);
+        }
+        else
+        {
+            FHueBlueprintCategoryInfo CategoryInfo;
+            if (GetBlueprintCategoryInfo(Node, CategoryInfo))
+            {
+                HueStyleResolverPrivate::RefreshCategoryTrackingAndMigrate(
+                    Blueprint,
+                    Extension,
+                    CategoryInfo.Category);
+                Extension->CategoryStyles.Remove(CategoryInfo.Category);
+            }
+        }
+    }
+
+    if (Settings)
+    {
+        Settings->SaveConfig();
+    }
+
+    for (UBlueprint* Blueprint : ModifiedBlueprints)
+    {
+        if (Scope == EHueStyleScope::Category)
+        {
+            if (UHueBlueprintExtension* Extension = FindBlueprintExtension(Blueprint))
+            {
+                HueStyleResolverPrivate::RefreshCategoryTrackingAndMigrate(
+                    Blueprint,
+                    Extension,
+                    FString());
+            }
+        }
+
+        Blueprint->MarkPackageDirty();
+    }
+
+    HueStyleResolverPrivate::InvalidateHueWidgets();
+}
+
+bool FHueStyleResolver::GetEffectiveCategoryColor(
+    const UEdGraphNode* Node,
+    EHueStyleChannel Channel,
+    FLinearColor& OutColor,
+    FString* OutSourceCategory,
+    bool bIncludeExact)
+{
+    if (OutSourceCategory)
+    {
+        OutSourceCategory->Reset();
+    }
+
+    FHueBlueprintCategoryInfo CategoryInfo;
+    if (!GetBlueprintCategoryInfo(Node, CategoryInfo)
+        || !CategoryInfo.DefiningBlueprint)
+    {
+        return false;
+    }
+
+    UHueBlueprintExtension* Extension =
+        FindBlueprintExtension(CategoryInfo.DefiningBlueprint);
+    if (!Extension)
+    {
+        return false;
+    }
+
+    // This is called by live Slate color attributes. Do not run category
+    // migration here. Open Blueprint editors notify Hue when Blueprint data
+    // changes, so this path stays a cheap hierarchy lookup.
+    FString Candidate = CategoryInfo.Category.TrimStartAndEnd();
+
+    if (!bIncludeExact)
+    {
+        int32 SeparatorIndex = INDEX_NONE;
+        if (!Candidate.FindLastChar(TEXT('|'), SeparatorIndex))
+        {
+            return false;
+        }
+        Candidate = Candidate.Left(SeparatorIndex).TrimStartAndEnd();
+    }
+
+    while (!Candidate.IsEmpty())
+    {
+        if (const FHueNodeStyleOverride* CategoryStyle =
+            Extension->CategoryStyles.Find(Candidate))
+        {
+            if (TryGetColor(*CategoryStyle, Channel, OutColor))
+            {
+                if (OutSourceCategory)
+                {
+                    *OutSourceCategory = Candidate;
+                }
+                return true;
+            }
+        }
+
+        int32 SeparatorIndex = INDEX_NONE;
+        if (!Candidate.FindLastChar(TEXT('|'), SeparatorIndex))
+        {
+            break;
+        }
+
+        Candidate = Candidate.Left(SeparatorIndex).TrimStartAndEnd();
+    }
+
+    return false;
+}
+
+bool FHueStyleResolver::GetColorOverride(
+    const UEdGraphNode* Node,
+    EHueStyleScope Scope,
+    EHueStyleChannel Channel,
+    FLinearColor& OutColor)
+{
+    const FHueNodeStyleOverride* Style = nullptr;
+    return TryGetScopeStyle(Node, Scope, Style)
+        && TryGetColor(*Style, Channel, OutColor);
+}
+
+int32 FHueStyleResolver::GetUniqueScopeTargetCount(
+    const TArray<UEdGraphNode*>& Nodes,
+    EHueStyleScope Scope)
+{
+    return HueStyleResolverPrivate::GetUniqueScopeRepresentatives(Nodes, Scope).Num();
 }
 
 bool FHueStyleResolver::HasColorOverride(

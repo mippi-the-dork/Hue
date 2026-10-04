@@ -15,4 +15,16 @@ void UHueSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChanged
         FSlateApplication::Get().InvalidateAllWidgets(false);
     }
 }
+
+
+void UHueSettings::PostEditUndo()
+{
+    Super::PostEditUndo();
+    SaveConfig();
+
+    if (FSlateApplication::IsInitialized())
+    {
+        FSlateApplication::Get().InvalidateAllWidgets(false);
+    }
+}
 #endif

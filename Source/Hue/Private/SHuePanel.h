@@ -1,4 +1,4 @@
-﻿// Copyright Mippithedork 2026, Inc. All Rights Reserved.
+// Copyright Mippithedork 2026, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -6,7 +6,6 @@
 #include "Widgets/SCompoundWidget.h"
 
 class FBlueprintEditor;
-class UBlueprint;
 class UEdGraphNode;
 class SVerticalBox;
 struct FSlateBrush;
@@ -29,7 +28,15 @@ private:
     static FText GetChannelLabel(EHueStyleChannel Channel);
     static FText GetChannelTooltip(EHueStyleChannel Channel);
 
-    UEdGraphNode* GetSelectedNode() const;
+    void GatherSelection(
+        TArray<UEdGraphNode*>& OutSupportedNodes,
+        int32& OutTotalNodeCount) const;
+    TArray<UEdGraphNode*> GetLiveSelectedNodes() const;
+    UEdGraphNode* GetPrimaryNode() const;
+    FString BuildSelectionKey(
+        const TArray<UEdGraphNode*>& SupportedNodes,
+        int32 TotalNodeCount) const;
+    void RefreshSelectionCache();
     void RebuildPanel();
 
     TSharedRef<SWidget> BuildScopeSection(EHueStyleScope Scope);
@@ -45,6 +52,13 @@ private:
     FText GetInheritedSourceTooltip(EHueStyleScope Scope, EHueStyleChannel Channel) const;
     FLinearColor GetSwatchColor(EHueStyleScope Scope, EHueStyleChannel Channel) const;
 
+    int32 GetScopeTargetCount(EHueStyleScope Scope) const;
+    int32 GetEligibleNodeCount(EHueStyleScope Scope) const;
+    bool HasAnyOverrideInSelection(EHueStyleScope Scope) const;
+    bool HasColorOverrideInSelection(
+        EHueStyleScope Scope,
+        EHueStyleChannel Channel) const;
+
     bool IsScopeExpanded(EHueStyleScope Scope) const;
     const FSlateBrush* GetScopeExpansionBrush(EHueStyleScope Scope) const;
 
@@ -55,10 +69,9 @@ private:
     FReply OnOpenHueSettingsClicked();
 
     TWeakPtr<FBlueprintEditor> BlueprintEditorPtr;
-    TWeakObjectPtr<UEdGraphNode> SelectedNode;
-    bool bCachedCategoryAvailable = false;
-    FString CachedCategory;
-    TWeakObjectPtr<UBlueprint> CachedCategoryBlueprint;
+    TArray<TWeakObjectPtr<UEdGraphNode>> SelectedNodes;
+    int32 TotalSelectedNodeCount = 0;
+    FString CachedSelectionKey;
 
     bool bInstanceExpanded = true;
     bool bCategoryExpanded = true;

@@ -21,6 +21,39 @@
 
 #define LOCTEXT_NAMESPACE "HuePanel"
 
+namespace HuePanelPrivate
+{
+    static bool IsScopeApplicable(
+        const UEdGraphNode* Node,
+        EHueStyleScope Scope)
+    {
+        if (!Node || !FHueStyleResolver::IsSupportedNode(Node))
+        {
+            return false;
+        }
+
+        if (Scope == EHueStyleScope::Category)
+        {
+            FHueBlueprintCategoryInfo CategoryInfo;
+            return FHueStyleResolver::GetBlueprintCategoryInfo(Node, CategoryInfo);
+        }
+
+        if (Scope == EHueStyleScope::GlobalFunction)
+        {
+            return !FHueStyleResolver::GetGlobalKey(Node).IsEmpty();
+        }
+
+        return true;
+    }
+
+    static bool NearlyEqualColor(
+        const FLinearColor& A,
+        const FLinearColor& B)
+    {
+        return A.Equals(B, KINDA_SMALL_NUMBER);
+    }
+}
+
 void SHuePanel::Construct(const FArguments& InArgs)
 {
     BlueprintEditorPtr = InArgs._BlueprintEditor;
@@ -30,6 +63,7 @@ void SHuePanel::Construct(const FArguments& InArgs)
         SAssignNew(RootBox, SVerticalBox)
     ];
 
+    RefreshSelectionCache();
     RebuildPanel();
 }
 
@@ -40,46 +74,150 @@ void SHuePanel::Tick(
 {
     SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
-    UEdGraphNode* NewNode = GetSelectedNode();
+    TArray<UEdGraphNode*> NewSupportedNodes;
+    int32 NewTotalNodeCount = 0;
+    GatherSelection(NewSupportedNodes, NewTotalNodeCount);
 
-    FHueBlueprintCategoryInfo CurrentCategoryInfo;
-    const bool bCurrentCategoryAvailable =
-        FHueStyleResolver::GetBlueprintCategoryInfo(NewNode, CurrentCategoryInfo);
+    const FString NewKey =
+        BuildSelectionKey(NewSupportedNodes, NewTotalNodeCount);
 
-    const FString CurrentCategory = bCurrentCategoryAvailable
-        ? CurrentCategoryInfo.Category
-        : FString();
-
-    UBlueprint* CurrentCategoryBlueprint = bCurrentCategoryAvailable
-        ? CurrentCategoryInfo.DefiningBlueprint
-        : nullptr;
-
-    const bool bSelectionChanged = SelectedNode.Get() != NewNode;
-    const bool bCategoryChanged =
-        bCachedCategoryAvailable != bCurrentCategoryAvailable
-        || CachedCategory != CurrentCategory
-        || CachedCategoryBlueprint.Get() != CurrentCategoryBlueprint;
-
-    if (bSelectionChanged || bCategoryChanged)
+    if (NewKey != CachedSelectionKey)
     {
-        SelectedNode = NewNode;
-        bCachedCategoryAvailable = bCurrentCategoryAvailable;
-        CachedCategory = CurrentCategory;
-        CachedCategoryBlueprint = CurrentCategoryBlueprint;
+        SelectedNodes.Reset();
+        for (UEdGraphNode* Node : NewSupportedNodes)
+        {
+            SelectedNodes.Add(Node);
+        }
+
+        TotalSelectedNodeCount = NewTotalNodeCount;
+        CachedSelectionKey = NewKey;
         RebuildPanel();
     }
 }
 
-UEdGraphNode* SHuePanel::GetSelectedNode() const
+void SHuePanel::GatherSelection(
+    TArray<UEdGraphNode*>& OutSupportedNodes,
+    int32& OutTotalNodeCount) const
 {
-    TSharedPtr<FBlueprintEditor> BlueprintEditor = BlueprintEditorPtr.Pin();
+    OutSupportedNodes.Reset();
+    OutTotalNodeCount = 0;
+
+    const TSharedPtr<FBlueprintEditor> BlueprintEditor =
+        BlueprintEditorPtr.Pin();
+
     if (!BlueprintEditor.IsValid())
     {
-        return nullptr;
+        return;
     }
 
-    UEdGraphNode* Node = BlueprintEditor->GetSingleSelectedNode();
-    return FHueStyleResolver::IsSupportedNode(Node) ? Node : nullptr;
+    const FGraphPanelSelectionSet Selection =
+        BlueprintEditor->GetSelectedNodes();
+
+    for (UObject* SelectedObject : Selection)
+    {
+        UEdGraphNode* Node = Cast<UEdGraphNode>(SelectedObject);
+        if (!Node)
+        {
+            continue;
+        }
+
+        ++OutTotalNodeCount;
+
+        if (FHueStyleResolver::IsSupportedNode(Node))
+        {
+            OutSupportedNodes.Add(Node);
+        }
+    }
+
+}
+
+TArray<UEdGraphNode*> SHuePanel::GetLiveSelectedNodes() const
+{
+    TArray<UEdGraphNode*> Result;
+    Result.Reserve(SelectedNodes.Num());
+
+    for (const TWeakObjectPtr<UEdGraphNode>& WeakNode : SelectedNodes)
+    {
+        if (UEdGraphNode* Node = WeakNode.Get())
+        {
+            if (FHueStyleResolver::IsSupportedNode(Node))
+            {
+                Result.Add(Node);
+            }
+        }
+    }
+
+    return Result;
+}
+
+UEdGraphNode* SHuePanel::GetPrimaryNode() const
+{
+    for (const TWeakObjectPtr<UEdGraphNode>& WeakNode : SelectedNodes)
+    {
+        if (UEdGraphNode* Node = WeakNode.Get())
+        {
+            return Node;
+        }
+    }
+    return nullptr;
+}
+
+FString SHuePanel::BuildSelectionKey(
+    const TArray<UEdGraphNode*>& SupportedNodes,
+    int32 TotalNodeCount) const
+{
+    TArray<FString> Parts;
+    Parts.Reserve(SupportedNodes.Num());
+
+    for (const UEdGraphNode* Node : SupportedNodes)
+    {
+        if (!Node)
+        {
+            continue;
+        }
+
+        FHueBlueprintCategoryInfo CategoryInfo;
+        const bool bHasCategory =
+            FHueStyleResolver::GetBlueprintCategoryInfo(Node, CategoryInfo);
+
+        const FString CategoryKey = bHasCategory
+            ? FString::Printf(
+                TEXT("%s:%s"),
+                CategoryInfo.DefiningBlueprint
+                    ? *CategoryInfo.DefiningBlueprint->GetPathName()
+                    : TEXT(""),
+                *CategoryInfo.Category)
+            : FString();
+
+        Parts.Add(FString::Printf(
+            TEXT("%u|%s|%s"),
+            Node->GetUniqueID(),
+            *FHueStyleResolver::GetGlobalKey(Node),
+            *CategoryKey));
+    }
+
+    Parts.Sort();
+
+    return FString::Printf(
+        TEXT("%d:%d:%s"),
+        TotalNodeCount,
+        SupportedNodes.Num(),
+        *FString::Join(Parts, TEXT(";")));
+}
+
+void SHuePanel::RefreshSelectionCache()
+{
+    TArray<UEdGraphNode*> SupportedNodes;
+    GatherSelection(SupportedNodes, TotalSelectedNodeCount);
+
+    SelectedNodes.Reset();
+    for (UEdGraphNode* Node : SupportedNodes)
+    {
+        SelectedNodes.Add(Node);
+    }
+
+    CachedSelectionKey =
+        BuildSelectionKey(SupportedNodes, TotalSelectedNodeCount);
 }
 
 void SHuePanel::RebuildPanel()
@@ -91,20 +229,30 @@ void SHuePanel::RebuildPanel()
 
     RootBox->ClearChildren();
 
-    UEdGraphNode* Node = SelectedNode.Get();
-    if (!Node)
+    const TArray<UEdGraphNode*> Nodes = GetLiveSelectedNodes();
+    const int32 SupportedCount = Nodes.Num();
+    const int32 UnsupportedCount =
+        FMath::Max(0, TotalSelectedNodeCount - SupportedCount);
+
+    if (SupportedCount == 0)
     {
         RootBox->AddSlot()
         .AutoHeight()
         .Padding(10.0f)
         [
             SNew(STextBlock)
-            .Text(LOCTEXT(
-                "SelectSupportedNode",
-                "Select a supported Blueprint node to edit its Hue style."))
+            .Text(TotalSelectedNodeCount > 0
+                ? FText::Format(
+                    LOCTEXT(
+                        "NoSupportedSelection",
+                        "{0} selected Blueprint nodes, but none are currently Hue-compatible."),
+                    FText::AsNumber(TotalSelectedNodeCount))
+                : LOCTEXT(
+                    "SelectSupportedNode",
+                    "Select one or more supported Blueprint nodes to edit their Hue style."))
             .ToolTipText(LOCTEXT(
                 "SelectSupportedNodeTooltip",
-                "Hue supports standard and compact K2 nodes plus compatible specialized presentations such as variables, math operators, Switch, Sequence, Timeline, Events, Format Text, collapsed graphs, Create Event, Spawn Actor, and other compatible native-specialized nodes. Legacy Documentation nodes are intentionally unsupported. Some node-owned custom widgets still require dedicated compatibility work."))
+                "Hue edits only nodes with a confirmed compatible visual path. Unsupported nodes can remain selected during a batch edit; Hue leaves them untouched."))
             .AutoWrapText(true)
             .ColorAndOpacity(FSlateColor::UseSubduedForeground())
         ];
@@ -113,15 +261,44 @@ void SHuePanel::RebuildPanel()
 
     RootBox->AddSlot()
     .AutoHeight()
-    .Padding(10.0f, 8.0f, 10.0f, 8.0f)
+    .Padding(10.0f, 8.0f, 10.0f, UnsupportedCount > 0 ? 2.0f : 8.0f)
     [
         SNew(STextBlock)
-        .Text(Node->GetNodeTitle(ENodeTitleType::ListView))
+        .Text(SupportedCount == 1 && TotalSelectedNodeCount == 1
+            ? Nodes[0]->GetNodeTitle(ENodeTitleType::ListView)
+            : FText::Format(
+                LOCTEXT(
+                    "MultiSelectionTitle",
+                    "{0} Hue-compatible nodes selected"),
+                FText::AsNumber(SupportedCount)))
         .Font(FAppStyle::GetFontStyle("BoldFont"))
-        .ToolTipText(LOCTEXT(
-            "SelectedNodeTooltip",
-            "Hue is editing visual style overrides for this selected Blueprint node."))
+        .ToolTipText(SupportedCount == 1 && TotalSelectedNodeCount == 1
+            ? LOCTEXT(
+                "SelectedNodeTooltip",
+                "Hue is editing visual style overrides for this selected Blueprint node.")
+            : LOCTEXT(
+                "SelectedNodesTooltip",
+                "Hue edits the compatible portion of the current Blueprint graph selection as one batch operation."))
     ];
+
+    if (UnsupportedCount > 0)
+    {
+        RootBox->AddSlot()
+        .AutoHeight()
+        .Padding(10.0f, 0.0f, 10.0f, 8.0f)
+        [
+            SNew(STextBlock)
+            .Text(FText::Format(
+                LOCTEXT(
+                    "UnsupportedSelectedCount",
+                    "{0} unsupported selected nodes will be left unchanged."),
+                FText::AsNumber(UnsupportedCount)))
+            .ToolTipText(LOCTEXT(
+                "UnsupportedSelectedCountTooltip",
+                "Hue never batch-edits nodes whose visual presentation has not been confirmed compatible."))
+            .ColorAndOpacity(FSlateColor::UseSubduedForeground())
+        ];
+    }
 
     RootBox->AddSlot()
     .FillHeight(1.0f)
@@ -150,12 +327,18 @@ void SHuePanel::RebuildPanel()
 
 TSharedRef<SWidget> SHuePanel::BuildScopeSection(EHueStyleScope Scope)
 {
-    UEdGraphNode* Node = SelectedNode.Get();
+    const TArray<UEdGraphNode*> Nodes = GetLiveSelectedNodes();
+    UEdGraphNode* Node = GetPrimaryNode();
+
+    const int32 ScopeTargetCount = GetScopeTargetCount(Scope);
+    const int32 EligibleNodeCount = GetEligibleNodeCount(Scope);
+    const bool bScopeAvailable = ScopeTargetCount > 0;
+    const bool bMultiSelection = Nodes.Num() > 1 || TotalSelectedNodeCount > 1;
 
     FHueBlueprintCategoryInfo CategoryInfo;
-    const bool bCategoryAvailable =
-        Scope != EHueStyleScope::Category
-        || FHueStyleResolver::GetBlueprintCategoryInfo(Node, CategoryInfo);
+    const bool bSingleCategoryAvailable =
+        Nodes.Num() == 1
+        && FHueStyleResolver::GetBlueprintCategoryInfo(Node, CategoryInfo);
 
     TSharedRef<SHorizontalBox> HeaderRow = SNew(SHorizontalBox);
 
@@ -201,12 +384,11 @@ TSharedRef<SWidget> SHuePanel::BuildScopeSection(EHueStyleScope Scope)
                 .Image(FAppStyle::GetBrush("Icons.Warning"))
                 .ColorAndOpacity(FSlateColor::UseSubduedForeground())
                 .ToolTipText(LOCTEXT(
-                    "CategoryWarningTooltip",
-                    "This node has no applicable My Blueprint Category assigned, so shared Category styling is unavailable."))
-                .Visibility(
-                    Scope == EHueStyleScope::Category && !bCategoryAvailable
-                        ? EVisibility::Visible
-                        : EVisibility::Collapsed)
+                    "ScopeUnavailableTooltip",
+                    "None of the selected Hue-compatible nodes have an applicable target for this scope."))
+                .Visibility(!bScopeAvailable
+                    ? EVisibility::Visible
+                    : EVisibility::Collapsed)
             ]
         ]
     ];
@@ -235,9 +417,59 @@ TSharedRef<SWidget> SHuePanel::BuildScopeSection(EHueStyleScope Scope)
 
     TSharedRef<SVerticalBox> Content = SNew(SVerticalBox);
 
-    if (Scope == EHueStyleScope::Category)
+    if (bMultiSelection)
     {
-        if (bCategoryAvailable)
+        Content->AddSlot()
+        .AutoHeight()
+        .Padding(6.0f, 5.0f, 6.0f, 1.0f)
+        [
+            SNew(STextBlock)
+            .Text(Scope == EHueStyleScope::Instance
+                ? FText::Format(
+                    LOCTEXT(
+                        "BatchInstanceSummary",
+                        "Applies to {0} selected Hue-compatible nodes."),
+                    FText::AsNumber(Nodes.Num()))
+                : Scope == EHueStyleScope::Category
+                    ? FText::Format(
+                        LOCTEXT(
+                            "BatchCategorySummary",
+                            "Applies to {0} unique categories across {1} eligible selected nodes."),
+                        FText::AsNumber(ScopeTargetCount),
+                        FText::AsNumber(EligibleNodeCount))
+                    : FText::Format(
+                        LOCTEXT(
+                            "BatchGlobalSummary",
+                            "Applies to {0} unique global targets across {1} eligible selected nodes."),
+                        FText::AsNumber(ScopeTargetCount),
+                        FText::AsNumber(EligibleNodeCount)))
+            .ToolTipText(LOCTEXT(
+                "BatchScopeSummaryTooltip",
+                "Hue deduplicates shared Category and Global identities before writing a batch edit, so the same shared rule is changed only once."))
+            .AutoWrapText(true)
+        ];
+
+        const int32 IneligibleCount = Nodes.Num() - EligibleNodeCount;
+        if (IneligibleCount > 0)
+        {
+            Content->AddSlot()
+            .AutoHeight()
+            .Padding(6.0f, 0.0f, 6.0f, 5.0f)
+            [
+                SNew(STextBlock)
+                .Text(FText::Format(
+                    LOCTEXT(
+                        "BatchIneligibleSummary",
+                        "{0} selected nodes have no target for this scope and will be ignored."),
+                    FText::AsNumber(IneligibleCount)))
+                .ColorAndOpacity(FSlateColor::UseSubduedForeground())
+                .AutoWrapText(true)
+            ];
+        }
+    }
+    else if (Scope == EHueStyleScope::Category)
+    {
+        if (bSingleCategoryAvailable)
         {
             Content->AddSlot()
             .AutoHeight()
@@ -249,7 +481,7 @@ TSharedRef<SWidget> SHuePanel::BuildScopeSection(EHueStyleScope Scope)
                     FText::FromString(CategoryInfo.Category)))
                 .ToolTipText(LOCTEXT(
                     "CategoryNameTooltip",
-                    "This is the user-assigned My Blueprint Category on the member definition. Supported functions, macros, Blueprint-authored events, and Blueprint member variables in the same Category share these Category overrides."))
+                    "This is the user-assigned My Blueprint Category on the member definition. Supported functions, macros, Blueprint-authored events, and Blueprint member variables in the same Category share these exact overrides. Nested child Categories inherit unset channels from their nearest styled parent."))
             ];
 
             Content->AddSlot()
@@ -263,47 +495,19 @@ TSharedRef<SWidget> SHuePanel::BuildScopeSection(EHueStyleScope Scope)
                         CategoryInfo.DefiningBlueprint
                             ? CategoryInfo.DefiningBlueprint->GetName()
                             : FString())))
-                .ToolTipText(LOCTEXT(
-                    "CategoryOwnerTooltip",
-                    "Category ownership follows the Blueprint that defines the function, macro, event, or member variable."))
                 .ColorAndOpacity(FSlateColor::UseSubduedForeground())
             ];
         }
         else
         {
-            UBlueprint* DefiningBlueprint = FHueStyleResolver::GetDefiningBlueprint(Node);
-
             Content->AddSlot()
             .AutoHeight()
-            .Padding(6.0f, 5.0f, 6.0f, 1.0f)
+            .Padding(6.0f, 5.0f, 6.0f, 5.0f)
             [
                 SNew(STextBlock)
-                .Text(LOCTEXT("NoCategoryAssigned", "No Category Assigned"))
-                .ToolTipText(LOCTEXT(
-                    "NoCategoryAssignedTooltip",
-                    "Hue Category styling becomes available when a supported Blueprint-defined function, macro, event, or member variable has an explicit My Blueprint Category."))
-                .ColorAndOpacity(FSlateColor::UseSubduedForeground())
-            ];
-
-            Content->AddSlot()
-            .AutoHeight()
-            .Padding(6.0f, 0.0f, 6.0f, 5.0f)
-            [
-                SNew(STextBlock)
-                .Text(DefiningBlueprint
-                    ? LOCTEXT(
-                        "AssignCategoryHelp",
-                        "Assign a Category to this function, macro, event, or member variable in its Details panel to enable shared Category styling.")
-                    : LOCTEXT(
-                        "NoCategoryForNodeTypeHelp",
-                        "Category styling applies to categorized Blueprint-defined functions, macros, events, and member variables. This node type has no My Blueprint member Category."))
-                .ToolTipText(DefiningBlueprint
-                    ? LOCTEXT(
-                        "AssignCategoryHelpTooltip",
-                        "Select the function, macro, event, or member variable in My Blueprint, then assign its Category in the Details panel.")
-                    : LOCTEXT(
-                        "NoCategoryForNodeTypeHelpTooltip",
-                        "Utility nodes and native members are not part of a user-authored My Blueprint Category unless they resolve to a Blueprint-authored categorized member."))
+                .Text(LOCTEXT(
+                    "NoCategoryAssigned",
+                    "No applicable My Blueprint Category is assigned to this node."))
                 .AutoWrapText(true)
                 .ColorAndOpacity(FSlateColor::UseSubduedForeground())
             ];
@@ -323,7 +527,7 @@ TSharedRef<SWidget> SHuePanel::BuildScopeSection(EHueStyleScope Scope)
         Content->AddSlot()
         .AutoHeight()
         [
-            BuildChannelRow(Scope, Channels[ChannelIndex], bCategoryAvailable)
+            BuildChannelRow(Scope, Channels[ChannelIndex], bScopeAvailable)
         ];
 
         if (ChannelIndex < UE_ARRAY_COUNT(Channels) - 1)
@@ -354,17 +558,14 @@ TSharedRef<SWidget> SHuePanel::BuildScopeSection(EHueStyleScope Scope)
         SNew(SButton)
         .Text(LOCTEXT("ClearScope", "Clear All"))
         .ToolTipText(FText::Format(
-            LOCTEXT("ClearScopeTooltip", "Clear every {0} Hue override in this scope."),
+            LOCTEXT(
+                "ClearScopeTooltip",
+                "Clear every {0} Hue override represented by the current selection."),
             GetScopeLabel(Scope)))
-        .IsEnabled_Lambda([this, Scope, bCategoryAvailable]()
+        .IsEnabled_Lambda([this, Scope]()
         {
-            if (!bCategoryAvailable)
-            {
-                return false;
-            }
-
-            UEdGraphNode* LiveNode = SelectedNode.Get();
-            return LiveNode && FHueStyleResolver::HasAnyOverride(LiveNode, Scope);
+            return GetScopeTargetCount(Scope) > 0
+                && HasAnyOverrideInSelection(Scope);
         })
         .OnClicked(this, &SHuePanel::OnClearScopeClicked, Scope)
     ];
@@ -440,7 +641,9 @@ TSharedRef<SWidget> SHuePanel::BuildChannelRow(
             SNew(SButton)
             .ContentPadding(2.0f)
             .ToolTipText(FText::Format(
-                LOCTEXT("SetChannelTooltip", "Choose {0} for the {1} scope. {2}"),
+                LOCTEXT(
+                    "SetChannelTooltip",
+                    "Choose {0} for the {1} scope. Batch edits replace only this Hue channel and leave the other channels unchanged. {2}"),
                 GetChannelLabel(Channel),
                 GetScopeLabel(Scope),
                 ChannelTooltip))
@@ -463,17 +666,13 @@ TSharedRef<SWidget> SHuePanel::BuildChannelRow(
             SNew(SButton)
             .Text(LOCTEXT("ClearChannel", "Clear"))
             .ToolTipText(FText::Format(
-                LOCTEXT("ClearChannelTooltip", "Clear this {0} override. Hue will inherit the next available lower-precedence value."),
+                LOCTEXT(
+                    "ClearChannelTooltip",
+                    "Clear this {0} override from every applicable target represented by the current selection."),
                 GetChannelLabel(Channel)))
-            .IsEnabled_Lambda([this, Scope, Channel, bScopeEnabled]()
+            .IsEnabled_Lambda([this, Scope, Channel]()
             {
-                if (!bScopeEnabled)
-                {
-                    return false;
-                }
-
-                UEdGraphNode* LiveNode = SelectedNode.Get();
-                return LiveNode && FHueStyleResolver::HasColorOverride(LiveNode, Scope, Channel);
+                return HasColorOverrideInSelection(Scope, Channel);
             })
             .OnClicked(this, &SHuePanel::OnClearColorClicked, Scope, Channel)
         ];
@@ -481,20 +680,75 @@ TSharedRef<SWidget> SHuePanel::BuildChannelRow(
 
 FText SHuePanel::GetScopeLabel(EHueStyleScope Scope) const
 {
+    const TArray<UEdGraphNode*> Nodes = GetLiveSelectedNodes();
+
+    if (Nodes.Num() <= 1 && TotalSelectedNodeCount <= 1)
+    {
+        switch (Scope)
+        {
+        case EHueStyleScope::Instance:
+            return LOCTEXT("InstanceScope", "Instance");
+        case EHueStyleScope::Category:
+            return LOCTEXT("CategoryScope", "Category");
+        case EHueStyleScope::GlobalFunction:
+            return FHueStyleResolver::GetGlobalScopeLabel(GetPrimaryNode());
+        }
+    }
+
+    const int32 Count = GetScopeTargetCount(Scope);
+
     switch (Scope)
     {
     case EHueStyleScope::Instance:
-        return LOCTEXT("InstanceScope", "Instance");
+        return FText::Format(
+            LOCTEXT("InstanceScopeBatch", "Instance ({0} Nodes)"),
+            FText::AsNumber(Count));
     case EHueStyleScope::Category:
-        return LOCTEXT("CategoryScope", "Category");
+        return FText::Format(
+            LOCTEXT("CategoryScopeBatch", "Category ({0} Categories)"),
+            FText::AsNumber(Count));
     case EHueStyleScope::GlobalFunction:
-        return FHueStyleResolver::GetGlobalScopeLabel(SelectedNode.Get());
+        return FText::Format(
+            LOCTEXT("GlobalScopeBatch", "Global ({0} Targets)"),
+            FText::AsNumber(Count));
     }
+
     return FText::GetEmpty();
 }
 
 FText SHuePanel::GetScopeTooltip(EHueStyleScope Scope) const
 {
+    const TArray<UEdGraphNode*> Nodes = GetLiveSelectedNodes();
+
+    if (Nodes.Num() > 1 || TotalSelectedNodeCount > 1)
+    {
+        const int32 TargetCount = GetScopeTargetCount(Scope);
+
+        switch (Scope)
+        {
+        case EHueStyleScope::Instance:
+            return FText::Format(
+                LOCTEXT(
+                    "InstanceScopeBatchTooltip",
+                    "Edit the Instance overrides of {0} selected Hue-compatible nodes as one transaction. Click to collapse or expand."),
+                FText::AsNumber(TargetCount));
+        case EHueStyleScope::Category:
+            return FText::Format(
+                LOCTEXT(
+                    "CategoryScopeBatchTooltip",
+                    "Edit {0} unique Blueprint Category targets represented by the current selection. Nodes without an applicable Category are ignored. Click to collapse or expand."),
+                FText::AsNumber(TargetCount));
+        case EHueStyleScope::GlobalFunction:
+            return FText::Format(
+                LOCTEXT(
+                    "GlobalScopeBatchTooltip",
+                    "Edit {0} unique project-wide Hue identities represented by the current selection. Repeated calls to the same function are deduplicated. Click to collapse or expand."),
+                FText::AsNumber(TargetCount));
+        }
+    }
+
+    UEdGraphNode* Node = GetPrimaryNode();
+
     switch (Scope)
     {
     case EHueStyleScope::Instance:
@@ -504,14 +758,13 @@ FText SHuePanel::GetScopeTooltip(EHueStyleScope Scope) const
 
     case EHueStyleScope::Category:
     {
-        UEdGraphNode* Node = SelectedNode.Get();
         FHueBlueprintCategoryInfo CategoryInfo;
         if (FHueStyleResolver::GetBlueprintCategoryInfo(Node, CategoryInfo))
         {
             return FText::Format(
                 LOCTEXT(
                     "CategoryScopeTooltipAvailable",
-                    "Shared style for supported Blueprint members in the My Blueprint Category '{0}' defined by {1}. Click to collapse or expand this section."),
+                    "Shared style for supported Blueprint members in the My Blueprint Category '{0}' defined by {1}. Unset channels inherit from the nearest styled parent Category before Global or Unreal Default. Click to collapse or expand this section."),
                 FText::FromString(CategoryInfo.Category),
                 FText::FromString(
                     CategoryInfo.DefiningBlueprint
@@ -527,7 +780,7 @@ FText SHuePanel::GetScopeTooltip(EHueStyleScope Scope) const
     case EHueStyleScope::GlobalFunction:
         return FText::Format(
             LOCTEXT("GlobalScopeTooltipFmt", "{0} Click to collapse or expand this section."),
-            FHueStyleResolver::GetGlobalScopeTooltip(SelectedNode.Get()));
+            FHueStyleResolver::GetGlobalScopeTooltip(Node));
     }
 
     return FText::GetEmpty();
@@ -573,22 +826,59 @@ FText SHuePanel::GetOverrideStateText(
     EHueStyleScope Scope,
     EHueStyleChannel Channel) const
 {
-    UEdGraphNode* Node = SelectedNode.Get();
-    if (!Node)
-    {
-        return FText::GetEmpty();
-    }
+    const TArray<UEdGraphNode*> Nodes = GetLiveSelectedNodes();
 
-    if (Scope == EHueStyleScope::Category)
+    bool bFoundApplicable = false;
+    bool bFirstHasOverride = false;
+    bool bMixed = false;
+    FLinearColor FirstColor = FLinearColor::White;
+
+    for (UEdGraphNode* Node : Nodes)
     {
-        FHueBlueprintCategoryInfo CategoryInfo;
-        if (!FHueStyleResolver::GetBlueprintCategoryInfo(Node, CategoryInfo))
+        if (!HuePanelPrivate::IsScopeApplicable(Node, Scope))
         {
-            return LOCTEXT("UnavailableState", "Unavailable");
+            continue;
+        }
+
+        FLinearColor Color;
+        const bool bHasOverride =
+            FHueStyleResolver::GetColorOverride(
+                Node,
+                Scope,
+                Channel,
+                Color);
+
+        if (!bFoundApplicable)
+        {
+            bFoundApplicable = true;
+            bFirstHasOverride = bHasOverride;
+            if (bHasOverride)
+            {
+                FirstColor = Color;
+            }
+            continue;
+        }
+
+        if (bHasOverride != bFirstHasOverride
+            || (bHasOverride
+                && !HuePanelPrivate::NearlyEqualColor(Color, FirstColor)))
+        {
+            bMixed = true;
+            break;
         }
     }
 
-    return FHueStyleResolver::HasColorOverride(Node, Scope, Channel)
+    if (!bFoundApplicable)
+    {
+        return LOCTEXT("UnavailableState", "Unavailable");
+    }
+
+    if (bMixed)
+    {
+        return LOCTEXT("MultipleValuesState", "Multiple Values");
+    }
+
+    return bFirstHasOverride
         ? LOCTEXT("OverrideState", "Override")
         : LOCTEXT("InheritedState", "Inherited");
 }
@@ -597,7 +887,7 @@ FText SHuePanel::GetInheritedSourceTooltip(
     EHueStyleScope Scope,
     EHueStyleChannel Channel) const
 {
-    UEdGraphNode* Node = SelectedNode.Get();
+    UEdGraphNode* Node = GetPrimaryNode();
     if (!Node)
     {
         return FText::GetEmpty();
@@ -606,14 +896,20 @@ FText SHuePanel::GetInheritedSourceTooltip(
     if (Scope == EHueStyleScope::Instance)
     {
         FHueBlueprintCategoryInfo CategoryInfo;
+        FString CategorySource;
+        FLinearColor CategoryColor;
         if (FHueStyleResolver::GetBlueprintCategoryInfo(Node, CategoryInfo)
-            && FHueStyleResolver::HasColorOverride(Node, EHueStyleScope::Category, Channel))
+            && FHueStyleResolver::GetEffectiveCategoryColor(
+                Node,
+                Channel,
+                CategoryColor,
+                &CategorySource))
         {
             return FText::Format(
                 LOCTEXT(
                     "InheritedFromCategoryFmt",
-                    "Inherited from Category '{0}' defined by {1}. Category has the next active value below Instance for this channel."),
-                FText::FromString(CategoryInfo.Category),
+                    "Inherited from Category '{0}' defined by {1}. Hue resolves the nearest active Category value below Instance for this channel."),
+                FText::FromString(CategorySource),
                 FText::FromString(
                     CategoryInfo.DefiningBlueprint
                         ? CategoryInfo.DefiningBlueprint->GetName()
@@ -623,7 +919,9 @@ FText SHuePanel::GetInheritedSourceTooltip(
         if (FHueStyleResolver::HasColorOverride(Node, EHueStyleScope::GlobalFunction, Channel))
         {
             return FText::Format(
-                LOCTEXT("InheritedFromGlobalFmt", "Inherited from {0}. No higher-precedence Category value is active for this channel."),
+                LOCTEXT(
+                    "InheritedFromGlobalFmt",
+                    "Inherited from {0}. No higher-precedence Category value is active for this channel."),
                 FHueStyleResolver::GetGlobalScopeLabel(Node));
         }
 
@@ -634,16 +932,34 @@ FText SHuePanel::GetInheritedSourceTooltip(
 
     if (Scope == EHueStyleScope::Category)
     {
+        FString ParentCategorySource;
+        FLinearColor ParentCategoryColor;
+        if (FHueStyleResolver::GetEffectiveCategoryColor(
+            Node,
+            Channel,
+            ParentCategoryColor,
+            &ParentCategorySource,
+            false))
+        {
+            return FText::Format(
+                LOCTEXT(
+                    "CategoryInheritedFromParentFmt",
+                    "Inherited from parent Category '{0}'. The nearest parent with an override wins for this channel."),
+                FText::FromString(ParentCategorySource));
+        }
+
         if (FHueStyleResolver::HasColorOverride(Node, EHueStyleScope::GlobalFunction, Channel))
         {
             return FText::Format(
-                LOCTEXT("CategoryInheritedFromGlobalFmt", "Inherited from {0}. This Category has no override for the channel."),
+                LOCTEXT(
+                    "CategoryInheritedFromGlobalFmt",
+                    "Inherited from {0}. Neither this Category nor any parent Category overrides this channel."),
                 FHueStyleResolver::GetGlobalScopeLabel(Node));
         }
 
         return LOCTEXT(
             "CategoryInheritedFromNative",
-            "Inherited from Unreal Default. Neither this Category nor the applicable Global scope overrides this channel.");
+            "Inherited from Unreal Default. Neither this Category, a parent Category, nor the applicable Global scope overrides this channel.");
     }
 
     return LOCTEXT(
@@ -655,27 +971,55 @@ FText SHuePanel::GetOverrideStateTooltip(
     EHueStyleScope Scope,
     EHueStyleChannel Channel) const
 {
-    UEdGraphNode* Node = SelectedNode.Get();
+    const TArray<UEdGraphNode*> Nodes = GetLiveSelectedNodes();
+    const FText State = GetOverrideStateText(Scope, Channel);
+
+    if (State.EqualTo(LOCTEXT("MultipleValuesState", "Multiple Values")))
+    {
+        return FText::Format(
+            LOCTEXT(
+                "MultipleValuesTooltip",
+                "The selected targets do not all share the same explicit Hue value for this channel. Choosing a color will replace this channel across {0} unique scope targets."),
+            FText::AsNumber(GetScopeTargetCount(Scope)));
+    }
+
+    if (Nodes.Num() > 1 || TotalSelectedNodeCount > 1)
+    {
+        if (State.EqualTo(LOCTEXT("UnavailableState", "Unavailable")))
+        {
+            return LOCTEXT(
+                "UnavailableBatchTooltip",
+                "None of the selected Hue-compatible nodes have an applicable target for this scope.");
+        }
+
+        return State.EqualTo(LOCTEXT("OverrideState", "Override"))
+            ? LOCTEXT(
+                "SharedOverrideBatchTooltip",
+                "All applicable selected targets share the same explicit Hue value for this channel.")
+            : LOCTEXT(
+                "SharedInheritedBatchTooltip",
+                "All applicable selected targets currently inherit this channel rather than defining an explicit override at this scope.");
+    }
+
+    UEdGraphNode* Node = GetPrimaryNode();
     if (!Node)
     {
         return FText::GetEmpty();
     }
 
-    if (Scope == EHueStyleScope::Category)
+    if (State.EqualTo(LOCTEXT("UnavailableState", "Unavailable")))
     {
-        FHueBlueprintCategoryInfo CategoryInfo;
-        if (!FHueStyleResolver::GetBlueprintCategoryInfo(Node, CategoryInfo))
-        {
-            return LOCTEXT(
-                "UnavailableStateTooltip",
-                "No applicable My Blueprint Category is assigned, so this Category channel cannot provide a Hue value.");
-        }
+        return LOCTEXT(
+            "UnavailableStateTooltip",
+            "No applicable target exists for this Hue scope.");
     }
 
     if (FHueStyleResolver::HasColorOverride(Node, Scope, Channel))
     {
         return FText::Format(
-            LOCTEXT("OverrideStateTooltip", "The {0} scope explicitly overrides this channel."),
+            LOCTEXT(
+                "OverrideStateTooltip",
+                "The {0} scope explicitly overrides this channel."),
             GetScopeLabel(Scope));
     }
 
@@ -686,11 +1030,72 @@ FLinearColor SHuePanel::GetSwatchColor(
     EHueStyleScope Scope,
     EHueStyleChannel Channel) const
 {
-    if (UEdGraphNode* Node = SelectedNode.Get())
+    const TArray<UEdGraphNode*> Nodes = GetLiveSelectedNodes();
+
+    for (UEdGraphNode* Node : Nodes)
     {
-        return FHueStyleResolver::GetPickerInitialColor(Node, Scope, Channel);
+        if (HuePanelPrivate::IsScopeApplicable(Node, Scope))
+        {
+            return FHueStyleResolver::GetPickerInitialColor(
+                Node,
+                Scope,
+                Channel);
+        }
     }
+
     return FLinearColor::White;
+}
+
+int32 SHuePanel::GetScopeTargetCount(EHueStyleScope Scope) const
+{
+    return FHueStyleResolver::GetUniqueScopeTargetCount(
+        GetLiveSelectedNodes(),
+        Scope);
+}
+
+int32 SHuePanel::GetEligibleNodeCount(EHueStyleScope Scope) const
+{
+    int32 Count = 0;
+
+    for (UEdGraphNode* Node : GetLiveSelectedNodes())
+    {
+        if (HuePanelPrivate::IsScopeApplicable(Node, Scope))
+        {
+            ++Count;
+        }
+    }
+
+    return Count;
+}
+
+bool SHuePanel::HasAnyOverrideInSelection(EHueStyleScope Scope) const
+{
+    for (UEdGraphNode* Node : GetLiveSelectedNodes())
+    {
+        if (HuePanelPrivate::IsScopeApplicable(Node, Scope)
+            && FHueStyleResolver::HasAnyOverride(Node, Scope))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool SHuePanel::HasColorOverrideInSelection(
+    EHueStyleScope Scope,
+    EHueStyleChannel Channel) const
+{
+    for (UEdGraphNode* Node : GetLiveSelectedNodes())
+    {
+        if (HuePanelPrivate::IsScopeApplicable(Node, Scope)
+            && FHueStyleResolver::HasColorOverride(Node, Scope, Channel))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool SHuePanel::IsScopeExpanded(EHueStyleScope Scope) const
@@ -707,7 +1112,8 @@ bool SHuePanel::IsScopeExpanded(EHueStyleScope Scope) const
     return true;
 }
 
-const FSlateBrush* SHuePanel::GetScopeExpansionBrush(EHueStyleScope Scope) const
+const FSlateBrush* SHuePanel::GetScopeExpansionBrush(
+    EHueStyleScope Scope) const
 {
     return FAppStyle::GetBrush(
         IsScopeExpanded(Scope)
@@ -729,6 +1135,7 @@ FReply SHuePanel::OnScopeHeaderClicked(EHueStyleScope Scope)
         bGlobalExpanded = !bGlobalExpanded;
         break;
     }
+
     return FReply::Handled();
 }
 
@@ -736,34 +1143,57 @@ FReply SHuePanel::OnSetColorClicked(
     EHueStyleScope Scope,
     EHueStyleChannel Channel)
 {
-    TWeakObjectPtr<UEdGraphNode> WeakNode = SelectedNode;
-    UEdGraphNode* Node = WeakNode.Get();
-    if (!Node)
+    const TArray<UEdGraphNode*> Nodes = GetLiveSelectedNodes();
+    if (FHueStyleResolver::GetUniqueScopeTargetCount(Nodes, Scope) == 0)
     {
         return FReply::Handled();
     }
 
-    if (Scope == EHueStyleScope::Category)
+    TArray<TWeakObjectPtr<UEdGraphNode>> WeakNodes;
+    WeakNodes.Reserve(Nodes.Num());
+
+    UEdGraphNode* InitialNode = nullptr;
+    for (UEdGraphNode* Node : Nodes)
     {
-        FHueBlueprintCategoryInfo CategoryInfo;
-        if (!FHueStyleResolver::GetBlueprintCategoryInfo(Node, CategoryInfo))
+        WeakNodes.Add(Node);
+        if (!InitialNode && HuePanelPrivate::IsScopeApplicable(Node, Scope))
         {
-            return FReply::Handled();
+            InitialNode = Node;
         }
     }
 
+    if (!InitialNode)
+    {
+        return FReply::Handled();
+    }
+
     const FLinearColor InitialColor =
-        FHueStyleResolver::GetPickerInitialColor(Node, Scope, Channel);
+        FHueStyleResolver::GetPickerInitialColor(
+            InitialNode,
+            Scope,
+            Channel);
 
     FColorPickerArgs PickerArgs(
         InitialColor,
         FOnLinearColorValueChanged::CreateLambda(
-            [WeakNode, Scope, Channel](FLinearColor NewColor)
+            [WeakNodes, Scope, Channel](FLinearColor NewColor)
             {
-                if (UEdGraphNode* LiveNode = WeakNode.Get())
+                TArray<UEdGraphNode*> LiveNodes;
+                LiveNodes.Reserve(WeakNodes.Num());
+
+                for (const TWeakObjectPtr<UEdGraphNode>& WeakNode : WeakNodes)
                 {
-                    FHueStyleResolver::SetColorOverride(LiveNode, Scope, Channel, NewColor);
+                    if (UEdGraphNode* Node = WeakNode.Get())
+                    {
+                        LiveNodes.Add(Node);
+                    }
                 }
+
+                FHueStyleResolver::SetColorOverrides(
+                    LiveNodes,
+                    Scope,
+                    Channel,
+                    NewColor);
             }));
 
     PickerArgs.bUseAlpha = false;
@@ -778,19 +1208,20 @@ FReply SHuePanel::OnClearColorClicked(
     EHueStyleScope Scope,
     EHueStyleChannel Channel)
 {
-    if (UEdGraphNode* Node = SelectedNode.Get())
-    {
-        FHueStyleResolver::ClearColorOverride(Node, Scope, Channel);
-    }
+    FHueStyleResolver::ClearColorOverrides(
+        GetLiveSelectedNodes(),
+        Scope,
+        Channel);
+
     return FReply::Handled();
 }
 
 FReply SHuePanel::OnClearScopeClicked(EHueStyleScope Scope)
 {
-    if (UEdGraphNode* Node = SelectedNode.Get())
-    {
-        FHueStyleResolver::ClearAllOverrides(Node, Scope);
-    }
+    FHueStyleResolver::ClearAllOverrides(
+        GetLiveSelectedNodes(),
+        Scope);
+
     return FReply::Handled();
 }
 
@@ -801,6 +1232,7 @@ FReply SHuePanel::OnOpenHueSettingsClicked()
     {
         SettingsModule->ShowViewer("Project", "Plugins", "Hue");
     }
+
     return FReply::Handled();
 }
 

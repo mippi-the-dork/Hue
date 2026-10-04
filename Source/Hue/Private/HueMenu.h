@@ -1,4 +1,4 @@
-﻿// Copyright Mippithedork 2026, Inc. All Rights Reserved.
+// Copyright Mippithedork 2026, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -14,8 +14,28 @@ public:
     static void BuildNodeContextEntry(FToolMenuSection& Section);
 
 private:
-    static void BuildHueMenu(UToolMenu* Menu, TWeakObjectPtr<UEdGraphNode> WeakNode);
-    static void BuildScopeMenu(UToolMenu* Menu, TWeakObjectPtr<UEdGraphNode> WeakNode, EHueStyleScope Scope);
-    static void AddChannelEntries(FToolMenuSection& Section, TWeakObjectPtr<UEdGraphNode> WeakNode, EHueStyleScope Scope, EHueStyleChannel Channel, const FText& Label, FName NamePrefix);
-    static void OpenHueColorPicker(TWeakObjectPtr<UEdGraphNode> WeakNode, EHueStyleScope Scope, EHueStyleChannel Channel);
+    static TArray<TWeakObjectPtr<UEdGraphNode>> ResolveContextNodes(
+        UEdGraphNode* ContextNode);
+
+    static void BuildHueMenu(
+        UToolMenu* Menu,
+        TArray<TWeakObjectPtr<UEdGraphNode>> WeakNodes);
+
+    static void BuildScopeMenu(
+        UToolMenu* Menu,
+        TArray<TWeakObjectPtr<UEdGraphNode>> WeakNodes,
+        EHueStyleScope Scope);
+
+    static void AddChannelEntries(
+        FToolMenuSection& Section,
+        TArray<TWeakObjectPtr<UEdGraphNode>> WeakNodes,
+        EHueStyleScope Scope,
+        EHueStyleChannel Channel,
+        const FText& Label,
+        FName NamePrefix);
+
+    static void OpenHueColorPicker(
+        TArray<TWeakObjectPtr<UEdGraphNode>> WeakNodes,
+        EHueStyleScope Scope,
+        EHueStyleChannel Channel);
 };

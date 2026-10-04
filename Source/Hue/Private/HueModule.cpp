@@ -1,4 +1,4 @@
-﻿// Copyright Mippithedork 2026, Inc. All Rights Reserved.
+// Copyright Mippithedork 2026, Inc. All Rights Reserved.
 
 #include "HueModule.h"
 
@@ -8,11 +8,13 @@
 #include "EdGraph/EdGraphSchema.h"
 #include "EdGraphSchema_K2.h"
 #include "EdGraphUtilities.h"
+#include "Engine/Blueprint.h"
 #include "Framework/Docking/LayoutExtender.h"
 #include "Framework/Docking/TabManager.h"
 #include "HueMenu.h"
 #include "HueNodeFactory.h"
 #include "HuePinFactory.h"
+#include "HueStyleResolver.h"
 #include "HueTabSummoner.h"
 #include "K2Node.h"
 #include "Modules/ModuleManager.h"
@@ -98,6 +100,22 @@ void FHueModule::ShutdownModule()
     {
         ToolMenus->UnregisterOwner(this);
     }
+
+    for (TPair<TWeakObjectPtr<UBlueprint>, FBlueprintChangeHandles>& Pair : BlueprintChangeHandles)
+    {
+        if (UBlueprint* Blueprint = Pair.Key.Get())
+        {
+            if (Pair.Value.ChangedHandle.IsValid())
+            {
+                Blueprint->OnChanged().Remove(Pair.Value.ChangedHandle);
+            }
+            if (Pair.Value.CompiledHandle.IsValid())
+            {
+                Blueprint->OnCompiled().Remove(Pair.Value.CompiledHandle);
+            }
+        }
+    }
+    BlueprintChangeHandles.Reset();
 
     RegisteredHueContextMenus.Reset();
     bToolMenusReady = false;
@@ -234,6 +252,53 @@ void FHueModule::HandleModulesChanged(
     }
 }
 
+void FHueModule::PruneBlueprintChangeTracking()
+{
+    for (auto It = BlueprintChangeHandles.CreateIterator(); It; ++It)
+    {
+        if (!It.Key().IsValid())
+        {
+            It.RemoveCurrent();
+        }
+    }
+}
+
+void FHueModule::RegisterBlueprintChangeTracking(UBlueprint* Blueprint)
+{
+    if (!Blueprint)
+    {
+        return;
+    }
+
+    PruneBlueprintChangeTracking();
+
+    const TWeakObjectPtr<UBlueprint> Key(Blueprint);
+    if (BlueprintChangeHandles.Contains(Key))
+    {
+        return;
+    }
+
+    FBlueprintChangeHandles Handles;
+    Handles.ChangedHandle = Blueprint->OnChanged().AddRaw(
+        this,
+        &FHueModule::HandleTrackedBlueprintChanged);
+    Handles.CompiledHandle = Blueprint->OnCompiled().AddRaw(
+        this,
+        &FHueModule::HandleTrackedBlueprintCompiled);
+
+    BlueprintChangeHandles.Add(Key, Handles);
+}
+
+void FHueModule::HandleTrackedBlueprintChanged(UBlueprint* Blueprint)
+{
+    FHueStyleResolver::NotifyBlueprintChanged(Blueprint, false);
+}
+
+void FHueModule::HandleTrackedBlueprintCompiled(UBlueprint* Blueprint)
+{
+    FHueStyleResolver::NotifyBlueprintChanged(Blueprint, true);
+}
+
 void FHueModule::RegisterBlueprintTabs(
     FWorkflowAllowedTabSet& TabFactories,
     FName ModeName,
@@ -243,6 +308,10 @@ void FHueModule::RegisterBlueprintTabs(
     {
         return;
     }
+
+    UBlueprint* Blueprint = BlueprintEditor->GetBlueprintObj();
+    RegisterBlueprintChangeTracking(Blueprint);
+    FHueStyleResolver::PrimeCategoryTracking(Blueprint);
 
     TabFactories.RegisterFactory(
         MakeShared<FHueTabSummoner>(BlueprintEditor));
