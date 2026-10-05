@@ -1,23 +1,28 @@
 {
-    "FileVersion": 3,
-    "Version": 25,
-    "VersionName": "1.0.0",
-    "FriendlyName": "Hue",
-    "Description": "Adds editor-only visual style overrides to Blueprint nodes with Instance, Category, Global, nested inheritance, and multi-selection workflows.",
-    "Category": "Editor",
-    "CreatedBy": "Mippi the Dork",
-    "CanContainContent": false,
-    "IsBetaVersion": false,
-    "Installed": false,
-    "EngineVersion": "5.8.0",
-    "SupportedTargetPlatforms": [
-        "Win64"
-    ],
-    "Modules": [
-        {
-            "Name": "Hue",
-            "Type": "Editor",
-            "LoadingPhase": "PostEngineInit"
-        }
-    ]
+	"FileVersion": 3,
+	"Version": 25,
+	"VersionName": "1.0.0",
+	"FriendlyName": "Hue",
+	"Description": "Adds editor-only visual style overrides to Blueprint nodes with Instance, Category, Global, nested inheritance, and multi-selection workflows.",
+	"Category": "Editor",
+	"CreatedBy": "Mippithedork",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"EngineVersion": "5.8.0",
+	"SupportedTargetPlatforms": [
+		"Win64"
+	],
+	"Modules": [
+		{
+			"Name": "Hue",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		}
+	],
+	"CreatedByURL": "https://github.com/mippi-the-dork",
+	"DocsURL": "https://github.com/mippi-the-dork/Hue",
+	"MarketplaceURL": "",
+	"SupportURL": "https://github.com/mippi-the-dork/Hue/issues",
+	"IsExperimentalVersion": false
 }
