@@ -1,134 +1,35 @@
-# Hue 0.18.0 Prototype
+# Hue
 
-Hue is an Unreal Engine Editor plugin for user-defined visual style overrides on Blueprint nodes.
+**Persistent visual styling for Unreal Engine Blueprint nodes.**
 
-Hue does not modify Unreal Engine source files and does not replace Blueprint node data classes. It changes only their Slate presentation.
+Hue adds editor-only color controls to compatible Blueprint nodes without changing Blueprint behavior. Style one node, an entire Blueprint Category, or the same logical node identity project-wide while preserving Unreal's native node interactions.
 
-## Product Goal
+**Target:** Unreal Engine 5.8.x on Windows 64-bit. Primary validation is Unreal Engine 5.8.3.
 
-Every visually meaningful Blueprint node should support Hue wherever technically safe.
+Hue is an Editor-only plugin. It requires no engine source modifications and adds no runtime system to packaged games.
 
-Hue preserves native node behavior first. When Unreal uses a specialized presentation, Hue either uses a dedicated compatible wrapper or lets Unreal build the native widget and binds Hue only to visual layers it can identify safely.
+## Features
 
-## Visual Channels
+### Four visual channels
 
-Hue provides four independently overridable channels:
+Hue exposes four independent presentation channels:
 
-- Header Color
-- Header Text Color
-- Body Color
-- Body Text Color
+- **Header Color**
+- **Header Text Color**
+- **Body Color**
+- **Body Text Color**
 
-Body Text Color also controls compatible execution-pin triangles and pin labels. Editable value controls such as numeric fields, checkboxes, dropdowns, class pickers, and object pickers remain native.
+Body Text Color also affects compatible execution-pin triangles and pin labels. Editable value controls such as numeric fields, checkboxes, dropdowns, class pickers, and object pickers remain Unreal-owned.
 
-## Precedence
+### Three styling scopes
 
-```text
-Instance
-    >
-Category
-    >
-Global
-    >
-Unreal Default
-```
+Hue supports three override scopes:
 
-Category means the user-authored Category assigned to a Blueprint member in My Blueprint. It is not a node class or action-menu category.
+1. **Instance** - one specific node instance.
+2. **Category** - matching Blueprint members in a user-authored My Blueprint Category.
+3. **Global** - the same Hue identity everywhere the plugin can identify it safely.
 
-## Multi-Selection and Batch Editing
-
-Hue 0.18.0 supports editing multiple unrelated Blueprint nodes at once.
-
-The Hue panel follows the current graph selection and separates the total selection from the Hue-compatible subset. Unsupported nodes can remain selected; Hue leaves them untouched.
-
-Batch behavior is scope-aware:
-
-- **Instance** edits apply independently to every selected Hue-compatible node.
-- **Category** edits apply to every unique Blueprint Category represented by the selection. Multiple nodes from the same defining Blueprint and Category are written once.
-- **Global** edits apply to every unique project-wide Hue identity represented by the selection. Repeated calls to the same function are written once.
-
-For each channel the panel reports:
-
-- **Override** when all applicable targets share the same explicit value.
-- **Inherited** when all applicable targets inherit at that scope.
-- **Multiple Values** when the selection mixes explicit/inherited ownership, contains different explicit colors, or inherits different displayed colors.
-- **Unavailable** when no selected compatible node has a target for that scope.
-
-Setting or clearing one channel does not disturb the other Hue channels. A batch operation uses one Unreal transaction and one visual refresh, so one Undo reverses the whole batch.
-
-The Blueprint node right-click Hue menu also expands to the current selection when the right-clicked node is part of that selection.
-
-
-
-
-## Visual and UX Polish
-
-Hue 0.18.0 makes the existing precedence model visible in the editor instead of requiring the user to infer why a channel currently looks the way it does.
-
-For a single selected node, each Hue channel now reports its immediate source inline when that scope does not own an explicit override. Examples include:
-
-```text
-Override
-Category: Attack|Weapons
-Parent: Attack
-Global Function
-Unreal Default
-```
-
-The panel also shows the precedence reminder `Instance > Category > Global > Unreal Default` near the current selection. Nested Category lookup remains exact-first and nearest-parent-first within the Category layer.
-
-Multi-selection keeps the compact batch states, but `Multiple Values` now also accounts for different inherited display values. Two selected nodes that both inherit at Instance scope but resolve to different Category colors no longer misleadingly appear as one shared inherited value.
-
-Other 0.18 panel polish includes slightly roomier channel rows, larger color swatches, consistent `Clear All Overrides` wording, and expanded tooltips that explain clearing, mixed-value picker initialization, inheritance, and lower-precedence fallback. No saved Hue data or color precedence changed in this pass.
-
-## Performance and Multi-Editor Hardening
-
-Hue 0.17.0 moves Category rename tracking out of live Slate color resolution. Open Blueprints now notify Hue when the Blueprint changes or compiles. Hue performs Category rename migration at that change boundary, while normal node color resolution stays lookup-only.
-
-This matters most on large graphs because Slate can query node colors many times during layout and paint. Hue no longer uses those queries as an opportunity to walk Blueprint functions, variables, events, and Category fingerprints.
-
-Custom/native compatibility probing is also cached per displayed Slate widget. If Hue inspects a custom node widget and cannot safely find the required header and body surfaces, it remembers that result for that exact widget instead of recursively rescanning it on every panel tick or context-menu query. If Unreal later reconstructs the node or another graph panel supplies a different widget, Hue can test the new presentation again.
-
-Blueprint change tracking is registered once per open Blueprint even when multiple Blueprint Editor modes or windows reference the same asset. Tracking delegates are removed during Hue shutdown.
-
-The intended result is:
-
-- no Category member scans during ordinary node paint/color lookup
-- no repeated compatibility tree scans for the same rejected custom widget
-- safe retry after Blueprint reconstruction or a different displayed widget
-- unchanged Instance, Category, Global, batch-edit, rename, and inheritance behavior
-- consistent Hue state across multiple open Blueprint editors and graph panels
-
-## Category Rename Persistence
-
-Hue 0.15.0 preserves Category Hue rules when a user renames a My Blueprint category.
-
-Hue keeps a lightweight editor-session snapshot of the styled category structure for each open Blueprint. When Unreal replaces an old category name with a new one, Hue migrates the existing Category style rather than leaving it orphaned under the previous string key.
-
-Behavior:
-
-- renaming a styled category preserves all four Hue channels
-- nested styled categories can follow a renamed parent prefix, for example `Combat|Weapons` -> `Gameplay|Weapons`
-- Undo/Redo of the category rename lets the Hue rule follow the category back and forth
-- renaming into an already-styled category preserves the destination values on conflicts and fills only channels the destination did not already override
-- moving one member to another category is not treated as a category rename
-- existing 0.14.1 Category style data remains compatible; no saved-data format migration is required
-
-## Nested Category Inheritance
-
-Hue 0.16.0 resolves Category colors hierarchically without copying parent values into child rules. For each Hue channel independently, the resolver checks the exact Category first, then walks upward through `|`-separated parent Categories until it finds an override.
-
-Example:
-
-```text
-Attack = Red Body
-Attack|Weapons = no Body override
-Attack|Weapons|Melee = no Body override
-```
-
-Both descendants render a Red Body. If `Attack|Weapons` overrides Body to Blue, `Attack|Weapons|Melee` inherits Blue while `Attack` remains Red. A child can override one channel and continue inheriting the other channels.
-
-Effective precedence is now:
+Resolution order:
 
 ```text
 Instance
@@ -139,132 +40,210 @@ Instance
 > Unreal Default
 ```
 
-Clearing a child Category override reveals the nearest inherited parent value immediately. Parent values remain stored only on the parent Category, so changing a parent updates every descendant that has not overridden that channel. Rename persistence continues to migrate exact Category keys and their styled descendants.
+Each visual channel resolves independently. A node can inherit its Header Color from a parent Category while overriding only its Body Color locally.
 
-Unreal stores user category text on Blueprint functions/macros and variables rather than exposing a durable category GUID. Hue therefore treats this as rename migration, not as a new permanent category identity system.
+### Nested Category inheritance
 
-## Broad K2 Coverage
+Categories use Unreal's `|` hierarchy syntax.
 
-Hue supports Unreal's normal K2 presentation plus compact nodes and Add Pin families.
+Example:
 
-The broad default path covers nodes such as:
+```text
+Attack
+Attack|Weapons
+Attack|Weapons|Melee
+```
 
-- Branch and ordinary function calls
-- Cast To nodes
-- latent calls such as Delay
-- async-task K2 nodes that use the normal K2 presentation
-- Construct Object from Class
-- Add Component by Class
-- ForEachLoop and ForEachLoopWithBreak macro instances
-- compatible conversion/autocast nodes
+If `Attack` owns a Body Color and its descendants do not, they inherit it. A closer child rule wins only for the channels it explicitly overrides.
 
-Compact nodes use one central fill, so Hue maps Header Color to that fill and uses Body Color as its fallback.
+Parent values are not copied into child data. Changing or clearing a parent rule updates descendants dynamically.
 
-## Add Pin Families
+### Category rename persistence
 
-Hue's Add Pin compatibility wrapper covers nodes implementing `IK2Node_AddPinInterface`, including:
+Hue tracks category structure while a Blueprint is open so renaming a styled My Blueprint Category keeps its Hue settings.
 
-- Sequence
-- MultiGate
-- Select
-- Make Array
-- Make Set
-- Make Map
-- compatible commutative/add-pin operators
+Renaming:
 
-Hue 0.13.0 brought this wrapper back in line with Unreal's native behavior by restoring the Add Pin transaction and native visibility rule. Adding a pin is now a normal Undo/Redo operation, and the button collapses when the node reports that another pin cannot be added.
+```text
+Attack -> Combat
+```
 
-## Specialized Coverage
+can also migrate styled descendants such as:
 
-Dedicated Hue-compatible presentation paths cover:
+```text
+Attack|Weapons -> Combat|Weapons
+```
 
+Moving one member to another Category is not treated as a Category rename.
+
+### Multi-selection and batch editing
+
+Select unrelated compatible Blueprint nodes and edit Hue properties together.
+
+Batch editing supports:
+
+- mixed values
+- Instance edits across every compatible selected node
+- Category edits across unique represented Categories
+- Global edits across unique represented Hue identities
+- unsupported nodes remaining selected without being modified
+- one Unreal transaction per batch operation
+- one Undo or Redo step for the full batch
+
+The Hue panel reports `Override`, `Inherited`, `Multiple Values`, or `Unavailable` as appropriate.
+
+### Effective source reporting
+
+For a single selected node, Hue explains where the current visible value comes from. Depending on the channel, the panel can report sources such as:
+
+```text
+Override
+Category: Attack|Weapons
+Parent: Attack
+Global Function
+Global Variable
+Global Event
+Unreal Default
+```
+
+This makes the active precedence path visible instead of requiring the user to infer it.
+
+### Right-click workflow
+
+Compatible Blueprint nodes expose a **Hue** submenu in their context menu.
+
+When the right-clicked node belongs to a compatible multi-selection, Hue operations can apply to the selected set rather than only the clicked node.
+
+### Native-safe presentation
+
+Hue preserves native Blueprint behavior first.
+
+Standard K2 nodes use Hue-compatible wrappers around Unreal's normal presentation. Specialized nodes continue using Unreal's native widget when replacing that widget could break selectors, dynamic pins, exposed-on-spawn controls, or other node-specific behavior. Hue attaches only to visual surfaces it can identify safely.
+
+If Hue cannot safely style a node presentation, it leaves that presentation untouched instead of exposing controls that do nothing.
+
+## Supported node coverage
+
+Hue covers the normal K2 presentation and a broad set of specialized families, including:
+
+- standard function calls
+- pure and impure calls
 - Blueprint Events
-- Blueprint Variable Get and Set
-- promotable math operators
+- Variable Get and Set
+- Cast nodes
+- latent calls such as Delay
+- compatible async-task nodes
+- compact operators and conversion nodes
 - Sequence and compatible Add Pin nodes
+- Select
+- MultiGate
+- Make Array, Make Set, and Make Map
 - Switch nodes
 - Timeline
 - Format Text
-- collapsed graph / composite nodes
-
-Hue also has a guarded native-specialized bridge for node families whose Slate renderers are private to Unreal's GraphEditor module:
-
-- Create Event / Create Delegate
-- Spawn Actor
-- Spawn Actor from Class
+- collapsed graph and composite nodes
+- Construct Object from Class
+- Add Component by Class
+- Create Widget
+- Spawn Actor and Spawn Actor from Class
+- Create Event and Create Delegate
 - Material Parameter Collection function nodes
 - Make Struct presentations
-- Copy nodes
+- Copy nodes when exposed by the current Blueprint context
 
-For these families Unreal still constructs the native specialized widget. Hue then binds to the standard title, body, title-text, pin-label, and execution-pin visual layers it can identify safely. Native selectors, exposed-on-spawn controls, pin behavior, and other specialized interactions remain Unreal-owned.
+Compatibility is presentation-dependent. Third-party or future engine nodes are styled only when Hue can confirm a safe visual path.
 
-## Node-Owned Visual Widgets
+## Intentionally unsupported
 
-Some K2 nodes can bypass every registered graph-node factory by returning their own Slate widget from `CreateVisualWidget()`.
+### Reroute Node
 
-Create Widget remains the known engine case Hue explicitly hooks during pin construction so its execution pins can participate in Hue. Hue 0.13.0 also added a general compatibility fallback for any displayed K2 node that bypassed Hue's factory:
+Reroute nodes do not expose the visual surfaces Hue is designed to style, so Hue does not offer controls for them.
 
-1. Hue reaches the native displayed node only after Unreal has created it.
-2. Hue scans without changing the widget.
-3. Support is accepted only if both a compatible standard header and body surface are present.
-4. Only then does Hue attach its color attributes and mark the live node supported.
-5. If those surfaces are not present, the node remains untouched and Hue does not offer controls for it.
+### Documentation Node
 
-This closes the false-positive case where a node could appear supported even though Hue had no usable visual surface to style.
+The Blueprint Documentation node remains intentionally unsupported. Hue leaves its specialized presentation untouched.
 
-## Confirmed Visual Support
+### Unknown custom widgets
 
-Hue separates potential K2 capability from confirmed visual support.
+A custom K2 node may work automatically if its displayed widget exposes compatible standard graph surfaces. Otherwise Hue leaves it unchanged.
 
-The Hue panel, right-click menu, and style mutation commands only treat a live node as supported after Hue has established one of these paths:
+## Using Hue
 
-- a Hue-owned compatible wrapper,
-- a validated native-specialized bridge,
-- or a validated node-owned native widget fallback.
+1. Open a Blueprint Editor.
+2. Open the **Hue** tab from the Blueprint Editor's tab/view menu if it is not already visible.
+3. Select one or more compatible Blueprint nodes.
+4. Choose the **Instance**, **Category**, or **Global** scope.
+5. Set any combination of Header Color, Header Text Color, Body Color, and Body Text Color.
+6. Use **Clear** for one channel or **Clear All Overrides** for the current scope to reveal lower-precedence values again.
 
-Known native-specialized bridges are now provisional during construction. If the finished native widget cannot be decorated, Hue retracts the support claim and its execution-pin widget falls back to Unreal's native color.
+You can perform the same core styling operations through the node right-click **Hue** submenu.
 
-## Right-Click Menu
+## Installation
 
-Hue registers class-specific ToolMenu extensions even when Unreal has not registered the native menu yet. This is intentional because Blueprint node context menus can be registered lazily.
+### Packaged plugin
 
-Hue refreshes its menu extensions after a Blueprint editor opens and when editor modules load. It also extends the K2 parent context menu when available.
+1. Close Unreal Editor.
+2. Extract the `Hue` folder into your project's `Plugins` folder.
+3. Confirm the descriptor is at `YourProject/Plugins/Hue/Hue.uplugin`.
+4. Open the project and enable **Hue** under **Edit > Plugins**.
+5. Restart Unreal Editor if prompted.
 
-Right-clicking a supported Blueprint node should expose the Hue submenu.
+Use a package built for your Unreal Engine version and platform. If Unreal reports incompatible binaries, use a matching package or build Hue from source.
 
-## Documentation and Reroute Nodes
+### Source installation
 
-Legacy Blueprint Documentation nodes are intentionally unsupported and completely ignored by Hue.
+1. Place the `Hue` folder in your C++ project's `Plugins` folder.
+2. Close Unreal Editor.
+3. Generate Visual Studio project files if needed for the initial installation.
+4. Build your project's **Development Editor / Win64** target.
+5. Open the project, enable **Hue**, and restart if prompted.
 
-Reroute/Knot nodes are also intentionally excluded because Hue's current header/body channels do not map meaningfully to their control-point presentation.
+A source build requires a working Unreal Engine C++ toolchain.
 
-## Compatibility Sweep
+## Compatibility
 
-Hue 0.13.0 added a formal compatibility matrix and regression plan covering:
+| | |
+| --- | --- |
+| **Hue Version** | 0.19.0 Release Candidate |
+| **Unreal Engine** | 5.8.x |
+| **Primary Validation Version** | 5.8.3 |
+| **Platform** | Windows 64-bit |
+| **Plugin Type** | Editor Only |
+| **Runtime Dependency** | None |
+| **Packaged Game Impact** | None |
 
-- object construction
-- Add Pin families
-- Switch and control-flow nodes
-- macros and latent/async nodes
-- structs
-- containers
-- Cast nodes
-- selection/hover/error/breakpoint visuals
-- reconstruction, duplication, copy/paste, save/reopen, and Blueprint recompilation
-- multi-selection, mixed values, batch scope deduplication, and one-step Undo/Redo
+Hue's descriptor uses Unreal Engine 5.8.0 as its engine-version baseline. Compatibility with engine versions or platforms outside the listed target should not be assumed unless explicitly validated.
 
-See `Doc/Compatibility-Matrix.md` and `Doc/Prototype-Test-Plan.md`.
+## How Hue works
 
-## Persistence
+Hue stores presentation metadata separately from Blueprint execution behavior.
 
-- Instance styles are stored with the Blueprint containing the node and keyed by `NodeGuid`.
-- Category styles are stored with the Blueprint defining the categorized member.
-- Global styles are project-shared in `Project Settings > Plugins > Hue`.
-- Existing Global Function keys from earlier Hue versions remain compatible.
+At a high level:
 
-## Target
+1. Hue identifies the selected Blueprint node and the applicable styling scopes.
+2. Instance, Category, nested parent Category, and Global rules are resolved in one precedence path.
+3. Hue supplies those visual values through a compatible Slate presentation path.
+4. Native node controls and Blueprint logic remain Unreal-owned.
+5. Unsupported presentations are left untouched.
 
-- Unreal Engine 5.8.0 - 5.8.3
-- Windows 64-bit
-- Editor Only
-- Source prototype
+Category rename tracking runs when the Blueprint reports structural changes rather than during normal Slate paint. Custom-widget compatibility failures are cached per displayed Slate widget so large graphs and multiple Blueprint Editor panels do not repeatedly rescan the same rejected presentation.
+
+## What Hue does not do
+
+Hue is a Blueprint Editor presentation tool. It does not:
+
+- change Blueprint execution
+- add runtime gameplay systems
+- modify packaged-game rendering
+- modify Unreal Engine source
+- force unsupported nodes through a generic replacement widget
+- recolor editable value controls that belong to Unreal's native node UI
+- treat action-menu categories or C++ node classes as My Blueprint Categories
+
+## Release Candidate status
+
+0.19.0 is the feature-frozen release candidate for Hue 1.0.0.
+
+No new features are planned between this release candidate and 1.0.0 unless validation exposes a release-blocking issue. The remaining work is compile validation, regression testing, documentation verification, and final release packaging.
+
+The full validation matrix and test plan are included in `Doc/`.
