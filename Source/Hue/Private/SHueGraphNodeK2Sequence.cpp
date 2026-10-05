@@ -3,6 +3,7 @@
 #include "SHueGraphNodeK2Sequence.h"
 
 #include "EdGraph/EdGraph.h"
+#include "GraphEditorSettings.h"
 #include "K2Node.h"
 #include "K2Node_AddPinInterface.h"
 #include "ScopedTransaction.h"
@@ -35,8 +36,9 @@ void SHueGraphNodeK2Sequence::CreateOutputSideAddButton(TSharedPtr<SVerticalBox>
 
     OutputBox->AddSlot()
     .AutoHeight()
+    .HAlign(HAlign_Right)
     .VAlign(VAlign_Center)
-    .Padding(0.0f, 4.0f, 0.0f, 0.0f)
+    .Padding(Settings->GetOutputPinPadding())
     [
         AddPinButtonContent(
             LOCTEXT("AddPin", "Add pin"),

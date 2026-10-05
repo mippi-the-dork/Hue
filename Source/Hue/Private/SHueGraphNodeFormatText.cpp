@@ -3,6 +3,7 @@
 #include "SHueGraphNodeFormatText.h"
 
 #include "EdGraph/EdGraph.h"
+#include "GraphEditorSettings.h"
 #include "K2Node_FormatText.h"
 #include "Widgets/SBoxPanel.h"
 
@@ -35,8 +36,9 @@ void SHueGraphNodeFormatText::CreateInputSideAddButton(
 
     InputBox->AddSlot()
     .AutoHeight()
+    .HAlign(HAlign_Left)
     .VAlign(VAlign_Center)
-    .Padding(0.0f, 4.0f, 0.0f, 0.0f)
+    .Padding(Settings->GetInputPinPadding())
     [
         AddPinButtonContent(
             LOCTEXT("AddArgument", "Add pin"),

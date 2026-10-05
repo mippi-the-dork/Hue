@@ -3,6 +3,7 @@
 #include "SHueGraphNodeK2Operator.h"
 
 #include "EdGraph/EdGraph.h"
+#include "GraphEditorSettings.h"
 #include "K2Node_PromotableOperator.h"
 #include "Widgets/SBoxPanel.h"
 
@@ -33,8 +34,9 @@ void SHueGraphNodeK2Operator::CreateInputSideAddButton(
 
     InputBox->AddSlot()
     .AutoHeight()
+    .HAlign(HAlign_Left)
     .VAlign(VAlign_Center)
-    .Padding(0.0f, 4.0f, 0.0f, 0.0f)
+    .Padding(Settings->GetInputPinPadding())
     [
         AddPinButtonContent(
             LOCTEXT("AddOperand", "Add pin"),

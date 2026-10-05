@@ -3,6 +3,7 @@
 #include "SHueGraphNodeK2Switch.h"
 
 #include "EdGraph/EdGraph.h"
+#include "GraphEditorSettings.h"
 #include "K2Node_Switch.h"
 #include "Widgets/SBoxPanel.h"
 
@@ -35,8 +36,9 @@ void SHueGraphNodeK2Switch::CreateOutputSideAddButton(
 
     OutputBox->AddSlot()
     .AutoHeight()
+    .HAlign(HAlign_Right)
     .VAlign(VAlign_Center)
-    .Padding(0.0f, 4.0f, 0.0f, 0.0f)
+    .Padding(Settings->GetOutputPinPadding())
     [
         AddPinButtonContent(
             LOCTEXT("AddCase", "Add pin"),

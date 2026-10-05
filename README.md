@@ -4,7 +4,12 @@
 
 Hue adds editor-only color controls to compatible Blueprint nodes without changing Blueprint behavior. Style one node, an entire Blueprint Category, or the same logical node identity project-wide while preserving Unreal's native node interactions.
 
-**Target:** Unreal Engine 5.8.x on Windows 64-bit. Primary validation is Unreal Engine 5.8.3.
+![Unreal Engine](https://img.shields.io/badge/Unreal%20Engine-5.8.0--5.8.3-black?logo=unrealengine)  
+![Platform](https://img.shields.io/badge/Platform-Windows%2064--bit-blue)  
+![Type](https://img.shields.io/badge/Plugin-Editor%20Only-green)  
+![Version](https://img.shields.io/badge/Version-1.0.0-blue)
+
+**Compatibility:** Unreal Engine 5.8.0 - 5.8.3 on Windows 64-bit. Primary validation is Unreal Engine 5.8.3.
 
 Hue is an Editor-only plugin. It requires no engine source modifications and adds no runtime system to packaged games.
 
@@ -204,15 +209,15 @@ A source build requires a working Unreal Engine C++ toolchain.
 
 | | |
 | --- | --- |
-| **Hue Version** | 0.19.0 Release Candidate |
-| **Unreal Engine** | 5.8.x |
+| **Hue Version** | 1.0.0 |
+| **Unreal Engine** | 5.8.0 - 5.8.3 |
 | **Primary Validation Version** | 5.8.3 |
 | **Platform** | Windows 64-bit |
 | **Plugin Type** | Editor Only |
 | **Runtime Dependency** | None |
 | **Packaged Game Impact** | None |
 
-Hue's descriptor uses Unreal Engine 5.8.0 as its engine-version baseline. Compatibility with engine versions or platforms outside the listed target should not be assumed unless explicitly validated.
+Hue's descriptor uses Unreal Engine 5.8.0 as its engine-version baseline. Hue 1.0.0 has been validated through Unreal Engine 5.8.3. Compatibility with other engine versions or platforms should not be assumed unless explicitly listed in a later release.
 
 ## How Hue works
 
@@ -240,10 +245,8 @@ Hue is a Blueprint Editor presentation tool. It does not:
 - recolor editable value controls that belong to Unreal's native node UI
 - treat action-menu categories or C++ node classes as My Blueprint Categories
 
-## Release Candidate status
+## Release status
 
-0.19.0 is the feature-frozen release candidate for Hue 1.0.0.
+Hue 1.0.0 is the first public release of Hue.
 
-No new features are planned between this release candidate and 1.0.0 unless validation exposes a release-blocking issue. The remaining work is compile validation, regression testing, documentation verification, and final release packaging.
-
-The full validation matrix and test plan are included in `Doc/`.
+The 1.0.0 source is promoted directly from the validated 0.19.1 release candidate. No new rendering, persistence, scope, or editing behavior was introduced during the final promotion. The full compatibility matrix and validation plan are included in `Doc/`.
