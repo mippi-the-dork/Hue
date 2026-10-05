@@ -285,7 +285,7 @@ void SHuePanel::RebuildPanel()
     {
         RootBox->AddSlot()
         .AutoHeight()
-        .Padding(10.0f, 0.0f, 10.0f, 8.0f)
+        .Padding(10.0f, 0.0f, 10.0f, 6.0f)
         [
             SNew(STextBlock)
             .Text(FText::Format(
@@ -299,6 +299,20 @@ void SHuePanel::RebuildPanel()
             .ColorAndOpacity(FSlateColor::UseSubduedForeground())
         ];
     }
+
+    RootBox->AddSlot()
+    .AutoHeight()
+    .Padding(10.0f, 0.0f, 10.0f, 6.0f)
+    [
+        SNew(STextBlock)
+        .Text(LOCTEXT(
+            "PrecedenceSummary",
+            "Instance  >  Category  >  Global  >  Unreal Default"))
+        .ToolTipText(LOCTEXT(
+            "PrecedenceSummaryTooltip",
+            "Hue resolves each channel independently. Instance wins first; Category checks the exact Category and then nearest styled parent Categories; Global is next; otherwise Unreal's native value is used."))
+        .ColorAndOpacity(FSlateColor::UseSubduedForeground())
+    ];
 
     RootBox->AddSlot()
     .FillHeight(1.0f)
@@ -556,7 +570,7 @@ TSharedRef<SWidget> SHuePanel::BuildScopeSection(EHueStyleScope Scope)
     .Padding(4.0f, 5.0f, 4.0f, 5.0f)
     [
         SNew(SButton)
-        .Text(LOCTEXT("ClearScope", "Clear All"))
+        .Text(LOCTEXT("ClearScope", "Clear All Overrides"))
         .ToolTipText(FText::Format(
             LOCTEXT(
                 "ClearScopeTooltip",
@@ -611,7 +625,7 @@ TSharedRef<SWidget> SHuePanel::BuildChannelRow(
         + SHorizontalBox::Slot()
         .FillWidth(1.0f)
         .VAlign(VAlign_Center)
-        .Padding(6.0f, 3.0f)
+        .Padding(6.0f, 4.0f)
         [
             SNew(STextBlock)
             .Text(GetChannelLabel(Channel))
@@ -620,7 +634,7 @@ TSharedRef<SWidget> SHuePanel::BuildChannelRow(
         + SHorizontalBox::Slot()
         .AutoWidth()
         .VAlign(VAlign_Center)
-        .Padding(4.0f, 3.0f)
+        .Padding(8.0f, 4.0f, 4.0f, 4.0f)
         [
             SNew(STextBlock)
             .Text_Lambda([this, Scope, Channel]()
@@ -643,7 +657,7 @@ TSharedRef<SWidget> SHuePanel::BuildChannelRow(
             .ToolTipText(FText::Format(
                 LOCTEXT(
                     "SetChannelTooltip",
-                    "Choose {0} for the {1} scope. Batch edits replace only this Hue channel and leave the other channels unchanged. {2}"),
+                    "Choose {0} for the {1} scope. Batch edits replace only this Hue channel and leave the other channels unchanged. When values are mixed, the swatch and picker start from the first applicable target. {2}"),
                 GetChannelLabel(Channel),
                 GetScopeLabel(Scope),
                 ChannelTooltip))
@@ -654,7 +668,7 @@ TSharedRef<SWidget> SHuePanel::BuildChannelRow(
                 {
                     return GetSwatchColor(Scope, Channel);
                 })
-                .Size(FVector2D(38.0f, 16.0f))
+                .Size(FVector2D(42.0f, 18.0f))
                 .ShowBackgroundForAlpha(false)
             ]
         ]
@@ -828,6 +842,22 @@ FText SHuePanel::GetOverrideStateText(
 {
     const TArray<UEdGraphNode*> Nodes = GetLiveSelectedNodes();
 
+    if (Nodes.Num() == 1 && TotalSelectedNodeCount <= 1)
+    {
+        UEdGraphNode* Node = Nodes[0];
+        if (!HuePanelPrivate::IsScopeApplicable(Node, Scope))
+        {
+            return LOCTEXT("UnavailableState", "Unavailable");
+        }
+
+        if (FHueStyleResolver::HasColorOverride(Node, Scope, Channel))
+        {
+            return LOCTEXT("OverrideState", "Override");
+        }
+
+        return GetSingleSelectionSourceText(Scope, Channel);
+    }
+
     bool bFoundApplicable = false;
     bool bFirstHasOverride = false;
     bool bMixed = false;
@@ -848,20 +878,23 @@ FText SHuePanel::GetOverrideStateText(
                 Channel,
                 Color);
 
+        const FLinearColor DisplayedColor = bHasOverride
+            ? Color
+            : FHueStyleResolver::GetPickerInitialColor(
+                Node,
+                Scope,
+                Channel);
+
         if (!bFoundApplicable)
         {
             bFoundApplicable = true;
             bFirstHasOverride = bHasOverride;
-            if (bHasOverride)
-            {
-                FirstColor = Color;
-            }
+            FirstColor = DisplayedColor;
             continue;
         }
 
         if (bHasOverride != bFirstHasOverride
-            || (bHasOverride
-                && !HuePanelPrivate::NearlyEqualColor(Color, FirstColor)))
+            || !HuePanelPrivate::NearlyEqualColor(DisplayedColor, FirstColor))
         {
             bMixed = true;
             break;
@@ -881,6 +914,72 @@ FText SHuePanel::GetOverrideStateText(
     return bFirstHasOverride
         ? LOCTEXT("OverrideState", "Override")
         : LOCTEXT("InheritedState", "Inherited");
+}
+
+FText SHuePanel::GetSingleSelectionSourceText(
+    EHueStyleScope Scope,
+    EHueStyleChannel Channel) const
+{
+    UEdGraphNode* Node = GetPrimaryNode();
+    if (!Node)
+    {
+        return FText::GetEmpty();
+    }
+
+    if (Scope == EHueStyleScope::Instance)
+    {
+        FString CategorySource;
+        FLinearColor CategoryColor;
+        if (FHueStyleResolver::GetEffectiveCategoryColor(
+            Node,
+            Channel,
+            CategoryColor,
+            &CategorySource))
+        {
+            return FText::Format(
+                LOCTEXT("SourceCategoryShort", "Category: {0}"),
+                FText::FromString(CategorySource));
+        }
+
+        if (FHueStyleResolver::HasColorOverride(
+            Node,
+            EHueStyleScope::GlobalFunction,
+            Channel))
+        {
+            return FHueStyleResolver::GetGlobalScopeLabel(Node);
+        }
+
+        return LOCTEXT("SourceUnrealDefault", "Unreal Default");
+    }
+
+    if (Scope == EHueStyleScope::Category)
+    {
+        FString ParentCategorySource;
+        FLinearColor ParentCategoryColor;
+        if (FHueStyleResolver::GetEffectiveCategoryColor(
+            Node,
+            Channel,
+            ParentCategoryColor,
+            &ParentCategorySource,
+            false))
+        {
+            return FText::Format(
+                LOCTEXT("SourceParentCategoryShort", "Parent: {0}"),
+                FText::FromString(ParentCategorySource));
+        }
+
+        if (FHueStyleResolver::HasColorOverride(
+            Node,
+            EHueStyleScope::GlobalFunction,
+            Channel))
+        {
+            return FHueStyleResolver::GetGlobalScopeLabel(Node);
+        }
+
+        return LOCTEXT("SourceUnrealDefault", "Unreal Default");
+    }
+
+    return LOCTEXT("SourceUnrealDefault", "Unreal Default");
 }
 
 FText SHuePanel::GetInheritedSourceTooltip(
@@ -979,7 +1078,7 @@ FText SHuePanel::GetOverrideStateTooltip(
         return FText::Format(
             LOCTEXT(
                 "MultipleValuesTooltip",
-                "The selected targets do not all share the same explicit Hue value for this channel. Choosing a color will replace this channel across {0} unique scope targets."),
+                "The selected targets differ in explicit override state or in the value currently displayed through inheritance. Choosing a color will replace this channel across {0} unique scope targets."),
             FText::AsNumber(GetScopeTargetCount(Scope)));
     }
 
@@ -1019,7 +1118,7 @@ FText SHuePanel::GetOverrideStateTooltip(
         return FText::Format(
             LOCTEXT(
                 "OverrideStateTooltip",
-                "The {0} scope explicitly overrides this channel."),
+                "The {0} scope explicitly owns this channel. Clearing it reveals the next available lower-precedence value."),
             GetScopeLabel(Scope));
     }
 

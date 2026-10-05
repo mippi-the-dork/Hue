@@ -1,4 +1,4 @@
-# Hue 0.17.0 Prototype
+# Hue 0.18.0 Prototype
 
 Hue is an Unreal Engine Editor plugin for user-defined visual style overrides on Blueprint nodes.
 
@@ -37,7 +37,7 @@ Category means the user-authored Category assigned to a Blueprint member in My B
 
 ## Multi-Selection and Batch Editing
 
-Hue 0.17.0 supports editing multiple unrelated Blueprint nodes at once.
+Hue 0.18.0 supports editing multiple unrelated Blueprint nodes at once.
 
 The Hue panel follows the current graph selection and separates the total selection from the Hue-compatible subset. Unsupported nodes can remain selected; Hue leaves them untouched.
 
@@ -51,7 +51,7 @@ For each channel the panel reports:
 
 - **Override** when all applicable targets share the same explicit value.
 - **Inherited** when all applicable targets inherit at that scope.
-- **Multiple Values** when the selection mixes explicit/inherited state or contains different explicit colors.
+- **Multiple Values** when the selection mixes explicit/inherited ownership, contains different explicit colors, or inherits different displayed colors.
 - **Unavailable** when no selected compatible node has a target for that scope.
 
 Setting or clearing one channel does not disturb the other Hue channels. A batch operation uses one Unreal transaction and one visual refresh, so one Undo reverses the whole batch.
@@ -59,6 +59,27 @@ Setting or clearing one channel does not disturb the other Hue channels. A batch
 The Blueprint node right-click Hue menu also expands to the current selection when the right-clicked node is part of that selection.
 
 
+
+
+## Visual and UX Polish
+
+Hue 0.18.0 makes the existing precedence model visible in the editor instead of requiring the user to infer why a channel currently looks the way it does.
+
+For a single selected node, each Hue channel now reports its immediate source inline when that scope does not own an explicit override. Examples include:
+
+```text
+Override
+Category: Attack|Weapons
+Parent: Attack
+Global Function
+Unreal Default
+```
+
+The panel also shows the precedence reminder `Instance > Category > Global > Unreal Default` near the current selection. Nested Category lookup remains exact-first and nearest-parent-first within the Category layer.
+
+Multi-selection keeps the compact batch states, but `Multiple Values` now also accounts for different inherited display values. Two selected nodes that both inherit at Instance scope but resolve to different Category colors no longer misleadingly appear as one shared inherited value.
+
+Other 0.18 panel polish includes slightly roomier channel rows, larger color swatches, consistent `Clear All Overrides` wording, and expanded tooltips that explain clearing, mixed-value picker initialization, inheritance, and lower-precedence fallback. No saved Hue data or color precedence changed in this pass.
 
 ## Performance and Multi-Editor Hardening
 

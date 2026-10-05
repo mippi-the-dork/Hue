@@ -48,6 +48,7 @@ private:
     FText GetScopeLabel(EHueStyleScope Scope) const;
     FText GetScopeTooltip(EHueStyleScope Scope) const;
     FText GetOverrideStateText(EHueStyleScope Scope, EHueStyleChannel Channel) const;
+    FText GetSingleSelectionSourceText(EHueStyleScope Scope, EHueStyleChannel Channel) const;
     FText GetOverrideStateTooltip(EHueStyleScope Scope, EHueStyleChannel Channel) const;
     FText GetInheritedSourceTooltip(EHueStyleScope Scope, EHueStyleChannel Channel) const;
     FLinearColor GetSwatchColor(EHueStyleScope Scope, EHueStyleChannel Channel) const;
