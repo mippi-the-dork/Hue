@@ -6,7 +6,7 @@ Hue adds editor-only color styling to compatible Blueprint nodes without changin
 
 Style a single node, an entire user-defined Blueprint Category, or the same logical node throughout the project. Each part of the node can be styled independently, inherited through nested Categories, and overridden exactly where needed.
 
-![Unreal Engine](https://img.shields.io/badge/Unreal%20Engine-5.8.0--5.8.3-black?logo=unrealengine)
+![Unreal Engine](https://img.shields.io/badge/Unreal%20Engine-5.8.x-black?logo=unrealengine)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2064--bit-blue)
 ![Type](https://img.shields.io/badge/Plugin-Editor%20Only-green)
 ![Version](https://img.shields.io/badge/Version-1.0.0-blue)
