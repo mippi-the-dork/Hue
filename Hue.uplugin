@@ -4,7 +4,7 @@
 	"VersionName": "1.0.0",
 	"FriendlyName": "Hue",
 	"Description": "Adds editor-only visual style overrides to Blueprint nodes with Instance, Category, Global, nested inheritance, and multi-selection workflows.",
-	"Category": "Editor",
+	"Category": "Blueprints",
 	"CreatedBy": "Mippithedork",
 	"CanContainContent": false,
 	"IsBetaVersion": false,
