@@ -1,33 +1,33 @@
-# Your First Styled Node — Design
+# First Use — Design
 
-**Hue v1.0.0 · Unreal Engine 5.8.x · Win64 · Editor only**
+**Hue v1.0.0 · User guide**
 
-## Your first edit
+## Your first style in five steps
 
-1. Open a Blueprint with an ordinary compatible **Call Function** node.
-2. Select the node in the graph. Open the **Hue** tab.
-3. Expand **Instance**; use **Header Color** to pick an easily distinguishable color.
-4. Observe that only this node instance changes—not other calls to the same function.
-5. Change **Body Text Color** separately. Header text and body tint should remain independent.
-6. Use **Clear** on the Header Color. If a Category or Global style applies, that inherited value becomes visible; otherwise Unreal's default returns.
-7. Undo and Redo a change using Unreal's normal history.
+1. Open an ordinary Blueprint with a function or variable node.
+2. If necessary, restore the **Hue** panel from the Blueprint Editor's tab menu.
+3. Select one compatible node on the graph. Hue updates its panel for that selection.
+4. Expand **Instance**, choose **Header Color**, and pick a clearly different color. The selected node's title region changes.
+5. Use **Clear** on Header Color. The node returns to its inherited Category/Global color or the native Unreal default.
 
-## First try with several nodes
+<figure class="doc-media" data-kind="gif" data-media-id="first-node-style"><img src="../../assets/media-placeholder.png" alt="Hue panel styling and clearing an Instance Header Color" loading="lazy"><figcaption>A local Instance override changes only the selected compatible node and can be cleared to reveal its inherited color.<span class="media-capture-instructions"><strong>Capture instructions · GIF:</strong> Record selecting one standard Blueprint function-call node, opening the Hue panel, setting its Instance Header Color through the picker, then clicking Clear. Keep the selected node, panel scope heading, color row and result in view. End on the original inherited/default state.</span></figcaption></figure>
 
-Select two or three compatible, different nodes. The Hue panel reports the number of supported selection targets and may show **Multiple Values**. Set Instance Body Color once to apply it to all eligible nodes in a single transaction.
+## Understand the four rows
 
-## Try a Category style
+Every applicable scope can specify **Header Color**, **Header Text Color**, **Body Color**, and **Body Text Color**. Some compact node families share a single fill rather than separate header/body surfaces. Hue preserves native controls such as numeric fields and dropdowns.
 
-Choose a function/variable whose **My Blueprint Category** is assigned. Select its compatible node, expand Category, and set Header Color. Other compatible nodes for members in that same user-defined category can inherit the style.
+## Understand the three scopes
 
-## What to watch for
+Instance affects one node. Category uses the node's **My Blueprint** member Category, not the Blueprint action menu Category. Global uses a logical node identity determined by its type. A scope may be unavailable if no corresponding identity exists.
 
-A scope that says **Unavailable** may simply lack the required identity. **Global** is based on a supported logical node identity, not matching visible titles. Unsupported nodes stay untouched even when included in a multi-selection.
+## Try your first inherited style
 
-## Before team use
+Give an applicable Category a Header Color, then select one of its member nodes and set a different Instance Body Color. The node can display both. Clear the Instance Body Color and watch the Category/Global/default source reappear for that channel.
 
-Review [Saving and Project Configuration](../../05-technical-reference/storage/DESIGN.md). Instance and Category rules travel with Blueprint assets, while Global rules live in project Hue configuration.
+## Before editing many nodes
+
+When multiple nodes are selected, check the supported selection count, unique Category/Global target count and Multiple Values labels. Batch changes occur in one Undo transaction; test in a disposable Blueprint before applying a new palette across production content.
 
 ---
 
-For the underlying C++ implementation, see [Technical](TECHNICAL.md).
+For Unreal implementation, data ownership and boundaries, [read Technical](TECHNICAL.md).

@@ -1,29 +1,27 @@
-# Your First Styled Node — Technical
+# First Use — Technical
 
-**Hue v1.0.0 · Unreal Engine 5.8.x · Win64 · Editor only**
+**Hue v1.0.0 · C++ source reference**
 
-## Selection and scope evaluation
+## Selection to panel flow
 
-`SHuePanel::Tick` and `RefreshSelectionCache` detect changes to the current Blueprint graph selection. `GetLiveSelectedNodes` collects live graph nodes, while `FHueStyleResolver::IsSupportedNode` filters which nodes have a confirmed visual styling path.
+`SHuePanel::GatherSelection` finds the Blueprint editor's selected graph nodes. `RefreshSelectionCache` and `BuildSelectionKey` help the panel detect meaningful selection and style changes before rebuilding native Slate controls.
 
-## Scope eligibility
+## Scope gating
 
-Instance applies to supported node instances. Category additionally calls `GetBlueprintCategoryInfo`. Global requires `GetGlobalKey` to return a usable identity. Unavailable scopes should not create fake categories or affect an unsupported node.
+The panel checks `FHueStyleResolver::IsSupportedNode` first. The Category scope additionally calls `GetBlueprintCategoryInfo`; Global requires a nonempty `GetGlobalKey`. An unsupported node can stay selected without being edited.
 
-## Editing pathway
+## Color editing
 
-Panel picker callbacks invoke the batch-capable resolver methods, including `SetColorOverrides`, `ClearColorOverrides`, and `ClearAllOverrides`. These methods are responsible for the transaction and invalidation, not the Slate color swatch itself.
+`SHuePanel::OnSetColorClicked` opens a native `SColorPicker`; accepted values dispatch `SetColorOverrides` to the style resolver. A channel clear calls `ClearColorOverrides`; a scope clear uses `ClearAllOverrides`. The public batch API intentionally performs one transaction per action.
 
-## Saving
+## Effective state display
 
-Instance and Category use `UHueBlueprintExtension` stored on the defining/owning Blueprint. Global uses `UHueSettings` project config, where changes are saved as editor configuration. All visual effects remain editor-only.
+For each channel, the panel distinguishes an explicit override from a value supplied by a parent Category, Global rule or Unreal default. In mixed selections the same displayed color need not imply identical source ownership.
+
+## Source
+
+[SHuePanel.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/SHuePanel.cpp) · [HueStyleResolver.h](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueStyleResolver.h).
 
 ---
 
-## Implementation references
-
-- [HueStyleResolver.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueStyleResolver.cpp)
-- [SHuePanel.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/SHuePanel.cpp)
-- [HueModule.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueModule.cpp)
-
-For practical user workflows, see [Design](DESIGN.md). Source-reviewed behavior is distinguished from unexecuted Unreal Editor QA.
+For normal user workflows, [read Design](DESIGN.md). Source-verified behavior is not a substitute for completed live editor QA.

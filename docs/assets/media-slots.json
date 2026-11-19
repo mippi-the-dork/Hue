@@ -46,6 +46,42 @@
       "caption": "Hue connects Blueprint editing tools, style resolution and native-safe node presentation through editor-only interfaces.",
       "capture_instructions": "Draw a diagram showing HueModule, HueStyleResolver, HuePanel, HueMenu, HueNodeFactory/PinFactory and native decorators, with Blueprint assets and project configuration as data owners.",
       "alt": "Hue Editor architecture diagram"
+    },
+    {
+      "id": "overview-workflow",
+      "kind": "image",
+      "page": "01-getting-started/overview/DESIGN.md",
+      "caption": "A styled Blueprint graph can distinguish related systems at a glance while preserving native execution and data connections.",
+      "capture_instructions": "Show a real Blueprint graph with at least three groups of nodes using different Hue colors for identifiable gameplay functions, with wires, titles and the Hue panel visible. Use meaningful colors rather than a random rainbow.",
+      "alt": "Unreal Blueprint graph with several Hue-styled node groups",
+      "final_asset": "assets/media/overview-workflow.png"
+    },
+    {
+      "id": "install-folder",
+      "kind": "image",
+      "page": "01-getting-started/installation/DESIGN.md",
+      "caption": "Hue can be installed directly in a project's Plugins directory without changing Unreal Engine source.",
+      "capture_instructions": "Capture Windows File Explorer showing YourProject/Plugins/Hue in the address bar with Hue.uplugin, Source, Resources and Config visible together. Do not show a doubly nested Hue/Hue folder.",
+      "alt": "Hue plugin installed in an Unreal project Plugins folder",
+      "final_asset": "assets/media/install-folder.png"
+    },
+    {
+      "id": "first-node-style",
+      "kind": "gif",
+      "page": "01-getting-started/first-use/DESIGN.md",
+      "caption": "A local Instance override changes only the selected compatible node and can be cleared to reveal its inherited color.",
+      "capture_instructions": "Record selecting one standard Blueprint function-call node, opening the Hue panel, setting its Instance Header Color through the picker, then clicking Clear. Keep the selected node, panel scope heading, color row and result in view. End on the original inherited/default state.",
+      "alt": "Hue panel styling and clearing an Instance Header Color",
+      "final_asset": "assets/media/first-node-style.gif"
+    },
+    {
+      "id": "four-channel-diagram",
+      "kind": "image",
+      "page": "02-styling-and-inheritance/visual-channels/DESIGN.md",
+      "caption": "The four Hue channels can be styled independently to distinguish a node's title, title text, body and pin labels.",
+      "capture_instructions": "Capture one standard K2 function-call node with a red header, white header text, dark-blue body and yellow body/pin-label text. Annotate all four regions and keep native value inputs recognizable.",
+      "alt": "Annotated Blueprint node displaying Hue's four visual channels",
+      "final_asset": "assets/media/four-channel-diagram.png"
     }
   ]
 }

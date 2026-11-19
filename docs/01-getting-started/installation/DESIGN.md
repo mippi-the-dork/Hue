@@ -1,32 +1,36 @@
 # Installation and Compatibility — Design
 
-**Hue v1.0.0 · Unreal Engine 5.8.x · Win64 · Editor only**
+**Hue v1.0.0 · User guide**
 
-## Requirements
+## Recommended installation
 
-Hue v1.0.0 targets **Unreal Engine 5.8.0–5.8.3, Windows 64-bit** as documented by its current release. It is an editor-only plugin; no engine-source modification is needed.
+For most users, install Hue through Fab or a compatible GitHub Release. Hue v1.0.0 targets **Unreal Engine 5.8.0–5.8.3, Windows 64-bit**, with UE 5.8.3 identified as the primary validated engine version in the release README.
 
-## Install a packaged release
+### From Fab
 
-1. Close Unreal Editor.
-2. Download a Hue ZIP matching the Unreal version/platform from [Hue Releases](https://github.com/mippi-the-dork/Hue/releases), or install the corresponding Fab package.
-3. Extract the **Hue** folder beneath `YourProject/Plugins/`.
-4. Confirm `YourProject/Plugins/Hue/Hue.uplugin` exists directly inside Hue—not a duplicated nested Hue folder.
-5. Open the project, enable Hue in **Edit → Plugins** if needed, and restart when prompted.
-6. Open a Blueprint Editor and find the **Hue** tab.
+Add Hue to your library, install it for the matching Unreal version through Epic Games Launcher, then enable it under **Edit → Plugins** if required. Restart the Editor if prompted.
 
-## Install from source
+### From GitHub Releases
 
-Clone the [Hue repository](https://github.com/mippi-the-dork/Hue) inside `YourProject/Plugins/Hue`, generate project files as needed, and build the Unreal **Development Editor / Win64** target with an appropriate C++ environment.
+1. Download a release ZIP built for your engine and Win64 from [Hue Releases](https://github.com/mippi-the-dork/Hue/releases). GitHub's automatically generated Source ZIP is not a compiled plugin release.
+2. Close the Unreal Editor.
+3. Extract the complete `Hue` folder into `YourProject/Plugins/` so `Hue.uplugin` is at `YourProject/Plugins/Hue/Hue.uplugin`.
+4. Reopen the project, enable Hue in Plugins and restart if requested.
 
-## Update a manual installation
+<figure class="doc-media" data-kind="image" data-media-id="install-folder"><img src="../../assets/media-placeholder.png" alt="Hue plugin installed in an Unreal project Plugins folder" loading="lazy"><figcaption>Hue can be installed directly in a project's Plugins directory without changing Unreal Engine source.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Capture Windows File Explorer showing YourProject/Plugins/Hue in the address bar with Hue.uplugin, Source, Resources and Config visible together. Do not show a doubly nested Hue/Hue folder.</span></figcaption></figure>
 
-Close Unreal, replace the entire existing Hue directory with the matching release, and reopen your project. Do not mix compiled binaries or source files from different plugin versions. Styles already saved in Blueprint assets or project configuration are separate from the plugin installation directory.
+### From source
 
-## If Hue does not appear
+Clone [the Hue repository](https://github.com/mippi-the-dork/Hue) to `YourProject/Plugins/Hue`, generate Visual Studio project files if required, build the **Development Editor / Win64** target, then launch your project.
 
-Verify platform and Unreal version, plugin activation, restart status, and that you're looking inside a **Blueprint Editor**, not the Level Editor Outliner. If the Hue panel was closed, restore its tab from the editor's tab controls.
+## Updating an installation
+
+Close Unreal first. Replace the entire prior plugin folder with the new matching release, or pull and rebuild if you installed from Git source. Your Blueprint assets and project editor settings are separate from the plugin installation directory.
+
+## After installation
+
+Open a Blueprint Editor, select a normal compatible K2 node, and look for the **Hue** tab. If it is absent, check plugin activation, exact UE version, build logs and available Blueprint Editor tabs.
 
 ---
 
-For the underlying C++ implementation, see [Technical](TECHNICAL.md).
+For Unreal implementation, data ownership and boundaries, [read Technical](TECHNICAL.md).

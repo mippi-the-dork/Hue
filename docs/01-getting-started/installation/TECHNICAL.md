@@ -1,29 +1,23 @@
 # Installation and Compatibility — Technical
 
-**Hue v1.0.0 · Unreal Engine 5.8.x · Win64 · Editor only**
+**Hue v1.0.0 · C++ source reference**
 
-## Descriptor and module configuration
+## Compatibility declarations
 
-`Hue.uplugin` specifies `FileVersion: 3`, `Version: 25`, `VersionName: 1.0.0`, `EngineVersion: 5.8.0`, and a single `Editor` module loaded at `PostEngineInit`. `CanContainContent` is false and the platform list contains Win64. It is not a packaged runtime module.
+The v1.0.0 [Hue.uplugin](https://github.com/mippi-the-dork/Hue/blob/main/Hue.uplugin) descriptor uses `VersionName: 1.0.0`, `EngineVersion: 5.8.0`, `SupportedTargetPlatforms: Win64`, `CanContainContent: false` and `Type: Editor`. The release README states a tested engine range through 5.8.3. Other platforms and versions must be tested separately.
 
-## Initialization order
+## Build dependencies
 
-`FHueModule::StartupModule` registers graph node and pin factories, then ToolMenus and Blueprint Editor hooks. Tab/layout callbacks install the Hue panel in compatible Blueprint Editors. Graph factory behavior is relevant only after the Editor module is actually loaded.
+[Hue.Build.cs](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Hue.Build.cs) declares Editor and Slate dependencies including Blueprint editor/graph integration. Compile the project's **Editor** configuration; do not reference Hue as a packaged runtime dependency.
 
-## Build configuration
+## Startup and shutdown
 
-`Source/Hue/Hue.Build.cs` lists Unreal Editor/Blueprint graph/Slate dependencies. Source builds need the target engine headers and a compatible compiler/toolchain; normal cooking targets should not require the Hue module.
+`FHueModule::StartupModule` registers the visual node and pin factories, Blueprint tabs/layout extensions and ToolMenus registration. `ShutdownModule` removes those hooks and releases tracked delegates. This integration is entirely plugin-side; no engine source patch is required.
 
-## Upgrade compatibility
+## Diagnosing missing UI
 
-The current documentation represents v1.0.0 and the source checked on `main`. A Git checkout may move ahead of release binaries; don't mix claims about the two without comparing versions. No test is claimed passed solely because the plugin descriptor lists an engine version.
+Separate plugin load failure from Blueprint tab registration, graph node compatibility and scope applicability. A Hue tab can exist even if the currently selected node does not have an available Category or Global identity. See [Editor Architecture](../../05-technical-and-support/architecture/TECHNICAL.md).
 
 ---
 
-## Implementation references
-
-- [HueStyleResolver.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueStyleResolver.cpp)
-- [SHuePanel.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/SHuePanel.cpp)
-- [HueModule.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueModule.cpp)
-
-For practical user workflows, see [Design](DESIGN.md). Source-reviewed behavior is distinguished from unexecuted Unreal Editor QA.
+For normal user workflows, [read Design](DESIGN.md). Source-verified behavior is not a substitute for completed live editor QA.
