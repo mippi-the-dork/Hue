@@ -160,7 +160,7 @@
     const out=[];
     out.push('<a class="nav-home" data-page="'+esc(state.manifest.home)+'" href="'+pageUrl(state.manifest.home)+'">⌂ Documentation Home</a>');
     out.push('<a class="ref-link" data-page="ROADMAP.md" href="'+pageUrl('ROADMAP.md')+'">Roadmap · Future Directions</a>');
-    out.push('<div class="nav-label">CURRENT VERSION · '++esc((state.manifest.baseline||'v1.0.0').replace('Hue ','').toUpperCase())+'</div>');
+    out.push('<div class="nav-label">CURRENT VERSION · '+esc((state.manifest.baseline||'v1.0.0').replace('Hue ','').toUpperCase())+'</div>');
     
     
     
