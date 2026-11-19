@@ -1,0 +1,51 @@
+{
+  "current_placeholder": "assets/media-placeholder.png",
+  "source": "User-supplied neutral placeholder",
+  "slots": [
+    {
+      "id": "get-started-layout",
+      "kind": "image",
+      "page": "01-getting-started/README.md",
+      "final_asset": "assets/media/get-started-layout.png",
+      "caption": "Hue adds a dedicated Blueprint styling panel while preserving Unreal's normal graph editing tools.",
+      "capture_instructions": "Capture a Blueprint Editor with the Hue panel docked, one normal selected node, its graph visible, and clear Instance/Category/Global headings.",
+      "alt": "Hue panel beside a selected Unreal Blueprint node"
+    },
+    {
+      "id": "channel-scopes-diagram",
+      "kind": "image",
+      "page": "02-styling-and-inheritance/README.md",
+      "final_asset": "assets/media/channel-scopes-diagram.png",
+      "caption": "Four independent color channels can resolve from different styling scopes on the same node.",
+      "capture_instructions": "Capture or draw a single Blueprint node with four contrasting visual channels and labels identifying the Instance, Category or Global source of each value.",
+      "alt": "Hue four-channel style diagram"
+    },
+    {
+      "id": "category-tree",
+      "kind": "image",
+      "page": "03-categories-and-identity/README.md",
+      "final_asset": "assets/media/category-tree.png",
+      "caption": "Nested My Blueprint Categories allow child nodes to inherit selected channels from their parents.",
+      "capture_instructions": "Capture My Blueprint with Combat, Combat|Weapons and Combat|Weapons|Melee (or an equivalent nested hierarchy) and a graph demonstrating contrasting inherited colors.",
+      "alt": "Hue nested Blueprint categories"
+    },
+    {
+      "id": "panel-context",
+      "kind": "gif",
+      "page": "04-editing-workflows/README.md",
+      "final_asset": "assets/media/panel-context.gif",
+      "caption": "The Hue panel updates as compatible Blueprint nodes are selected and styled.",
+      "capture_instructions": "Record selecting two different compatible graph nodes and using the Hue panel to change an Instance color, then clear it. Keep source labels visible.",
+      "alt": "Hue Blueprint panel responding to selection"
+    },
+    {
+      "id": "module-architecture",
+      "kind": "image",
+      "page": "05-technical-and-support/README.md",
+      "final_asset": "assets/media/module-architecture.png",
+      "caption": "Hue connects Blueprint editing tools, style resolution and native-safe node presentation through editor-only interfaces.",
+      "capture_instructions": "Draw a diagram showing HueModule, HueStyleResolver, HuePanel, HueMenu, HueNodeFactory/PinFactory and native decorators, with Blueprint assets and project configuration as data owners.",
+      "alt": "Hue Editor architecture diagram"
+    }
+  ]
+}
