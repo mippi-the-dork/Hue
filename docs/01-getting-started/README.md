@@ -1,26 +1,27 @@
 # 01. Getting Started
 
-Hue makes Blueprint graphs easier to scan by applying a consistent visual language to nodes without changing their logic. Its four visual channels can be styled at a single node, a Blueprint member Category, or a project-wide logical identity.
+**Hue v1.0.0 · Purpose, installation and first use**
 
-## The shortest useful workflow
+Hue is an editor-only tool that makes **compatible Blueprint graphs easier to read**. It doesn't change Blueprint execution, packaged-game rendering, compiled output or native editor interactions.
 
-Open a Blueprint, select a compatible node, open the **Hue** panel, expand **Instance**, and set **Header Color**. Watch just that node change. Then clear the override to restore inherited styling or the Unreal default. You do not need a new Actor, Blueprint subclass, or runtime system.
+## Your first workflow
 
-## What Hue does not do
+Install Hue for the supported Unreal Editor, open a Blueprint, select a normal Call Function node and expand Instance in the Hue tab. Set its Header Color, inspect the visual change, then Clear the override. If a lower-level category or global rule exists, you will see it again.
 
-Hue does not alter execution, compilation, runtime functionality or packaged rendering. It avoids replacing native editable controls such as number fields, dropdowns and object pickers, and it leaves visually unsupported node presentations alone.
+## First concepts
 
-<figure class="doc-media" data-kind="image" data-media-id="get-started-layout">
-  <img src="../assets/media-placeholder.png" alt="Hue panel beside a selected Unreal Blueprint node" loading="lazy">
-  <figcaption>Hue adds a dedicated Blueprint styling panel while preserving Unreal's normal graph editing tools.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Capture a Blueprint Editor with the Hue panel docked, one normal selected node, its graph visible, and clear Instance/Category/Global headings.</span></figcaption>
-</figure>
+Hue has four independent visual channels and three styling scopes. You don't need to understand the C++ implementation to use it; start with the Design guides. The corresponding Technical guides document ownership, resolution and limitations.
 
-## Topics
+## Before using shared styles
 
-| Topic | What you'll learn | Design | Technical |
+Styles at Instance/Category scopes belong to the relevant Blueprint assets. Global rules belong to project Hue editor configuration. Review their different saving behavior before styling a team project.
+
+## Topics in this section
+
+| Topic | What you will learn | Design | Technical |
 | --- | --- | --- | --- |
-| **Overview** | Why Hue exists and when visual styling helps | [Design](overview/DESIGN.md) | [Technical](overview/TECHNICAL.md) |
-| **Installation and Compatibility** | Fab, GitHub releases, source builds and supported Unreal environments | [Design](installation/DESIGN.md) | [Technical](installation/TECHNICAL.md) |
-| **First Use** | Open the Hue panel, select a node and create a first override | [Design](first-use/DESIGN.md) | [Technical](first-use/TECHNICAL.md) |
+| **What Hue Does** | Understand why Hue changes presentation rather than Blueprint behavior | [Design](introduction/DESIGN.md) | [Technical](introduction/TECHNICAL.md) |
+| **Installation and Compatibility** | Install from Fab, release or source and confirm the supported editor | [Design](installation/DESIGN.md) | [Technical](installation/TECHNICAL.md) |
+| **Your First Styled Node** | Open the Hue tab, set a first color and read its source | [Design](first-use/DESIGN.md) | [Technical](first-use/TECHNICAL.md) |
 
-The **Design** guide explains the user-facing workflow. The **Technical** guide describes source ownership, native engine integration and limitations. Use both when investigating a behavior that isn't immediately obvious.
+Read **Design** for user behavior and **Technical** for the source implementation. The guides complement one another rather than duplicating the same walkthrough.
