@@ -1,0 +1,438 @@
+{
+  "baseline": "Hue v1.0.0",
+  "current_placeholder": "assets/media-placeholder.png",
+  "placeholder_source": "User-supplied neutral placeholder",
+  "note": "The first line is reader-facing caption. The second line is an explicit screenshot/GIF creation brief. Final image and GIF files are not yet captured.",
+  "slots": [
+    {
+      "page": "01-getting-started/README.md",
+      "id": "getting-started-editor",
+      "kind": "image",
+      "caption": "Hue lives alongside the Blueprint graph, giving compatible selected nodes a dedicated styling panel.",
+      "capture_instructions": "Capture UE 5.8 Blueprint Editor with graph, selected Call Function node, docked Hue tab, and Instance/Category/Global headings readable.",
+      "position": 0,
+      "alt": "Hue lives alongside the Blueprint graph, giving compatible selected nodes a dedicated styling panel.",
+      "final_asset": "assets/media/getting-started-editor.png"
+    },
+    {
+      "page": "02-styling-fundamentals/README.md",
+      "id": "fundamentals-four-channels",
+      "kind": "image",
+      "caption": "Header, title, body and compatible labels can each receive their own color.",
+      "capture_instructions": "Show one normal supported node with clearly differentiated Header Color, Header Text Color, Body Color and Body Text Color; annotate the four actual surfaces.",
+      "position": 0,
+      "alt": "Header, title, body and compatible labels can each receive their own color.",
+      "final_asset": "assets/media/fundamentals-four-channels.png"
+    },
+    {
+      "page": "03-category-styling/README.md",
+      "id": "category-inheritance-tree",
+      "kind": "image",
+      "caption": "Nested My Blueprint categories let related members share parent styles without copying values.",
+      "capture_instructions": "Show My Blueprint Combat, Combat|Weapons and Combat|Weapons|Melee with matching graph nodes; label parent and inherited colors.",
+      "position": 0,
+      "alt": "Nested My Blueprint categories let related members share parent styles without copying values.",
+      "final_asset": "assets/media/category-inheritance-tree.png"
+    },
+    {
+      "page": "04-editing-workflows/README.md",
+      "id": "editing-workflows-overview",
+      "kind": "image",
+      "caption": "Hue's panel and node context menu provide complementary ways to apply the same style rules.",
+      "capture_instructions": "Capture a selected function node, Hue panel and open right-click Hue submenu without obscuring important controls.",
+      "position": 0,
+      "alt": "Hue's panel and node context menu provide complementary ways to apply the same style rules.",
+      "final_asset": "assets/media/editing-workflows-overview.png"
+    },
+    {
+      "page": "05-technical-reference/README.md",
+      "id": "technical-editor-architecture",
+      "kind": "image",
+      "caption": "Hue separates the rules that choose colors from the native Slate surfaces that display them.",
+      "capture_instructions": "Create a diagram of HueModule, HueStyleResolver, SHuePanel, HueMenu, HueNodeFactory, HuePinFactory, HueNativeNodeDecorator and Blueprint/config storage.",
+      "position": 0,
+      "alt": "Hue separates the rules that choose colors from the native Slate surfaces that display them.",
+      "final_asset": "assets/media/technical-editor-architecture.png"
+    },
+    {
+      "page": "06-support/README.md",
+      "id": "support-effective-source",
+      "kind": "image",
+      "caption": "Effective-source labels identify why a selected node has its current color.",
+      "capture_instructions": "Capture one selected node with two Hue channel rows showing distinct sources such as Override and Parent Category, with the node visible.",
+      "position": 0,
+      "alt": "Effective-source labels identify why a selected node has its current color.",
+      "final_asset": "assets/media/support-effective-source.png"
+    },
+    {
+      "page": "01-getting-started/introduction/DESIGN.md",
+      "id": "introduction-color-language",
+      "kind": "image",
+      "caption": "A consistent palette can make movement, combat and UI logic easier to recognize at a glance.",
+      "capture_instructions": "Capture a nontrivial but readable Blueprint with movement nodes blue, combat nodes red and UI helpers purple; leave pin connections and labels visible.",
+      "position": 0,
+      "alt": "A consistent palette can make movement, combat and UI logic easier to recognize at a glance.",
+      "final_asset": "assets/media/introduction-color-language.png"
+    },
+    {
+      "page": "01-getting-started/installation/DESIGN.md",
+      "id": "installation-folder",
+      "kind": "image",
+      "caption": "Hue installs as a normal Editor plugin under the Unreal project's Plugins directory.",
+      "capture_instructions": "Show Explorer at YourProject/Plugins/Hue with Hue.uplugin, Source, Resources and Config visible; avoid any nested duplicate Hue folder.",
+      "position": 0,
+      "alt": "Hue installs as a normal Editor plugin under the Unreal project's Plugins directory.",
+      "final_asset": "assets/media/installation-folder.png"
+    },
+    {
+      "page": "01-getting-started/first-use/DESIGN.md",
+      "id": "first-use-color",
+      "kind": "gif",
+      "caption": "A single Instance override changes only the selected node, then clears back to its inherited appearance.",
+      "capture_instructions": "Record selecting a Call Function node, opening the Hue panel, setting Instance Header Color in the native picker, then clearing it with another call to the same function visible.",
+      "position": 0,
+      "alt": "A single Instance override changes only the selected node, then clears back to its inherited appearance.",
+      "final_asset": "assets/media/first-use-color.gif"
+    },
+    {
+      "page": "02-styling-fundamentals/channels/DESIGN.md",
+      "id": "channels-annotated",
+      "kind": "image",
+      "caption": "The four visual channels target separate regions of a supported node.",
+      "capture_instructions": "Capture a standard node styled with red header, white title text, dark blue body and yellow body labels; label each region without covering the node.",
+      "position": 0,
+      "alt": "The four visual channels target separate regions of a supported node.",
+      "final_asset": "assets/media/channels-annotated.png"
+    },
+    {
+      "page": "02-styling-fundamentals/scopes/DESIGN.md",
+      "id": "scopes-panel",
+      "kind": "image",
+      "caption": "The same node can have Instance, Category and Global style sources with different reach.",
+      "capture_instructions": "Select a node with an actual My Blueprint Category and applicable Global Function identity, then capture all three Hue scope headers and source states.",
+      "position": 0,
+      "alt": "The same node can have Instance, Category and Global style sources with different reach.",
+      "final_asset": "assets/media/scopes-panel.png"
+    },
+    {
+      "page": "02-styling-fundamentals/precedence/DESIGN.md",
+      "id": "precedence-stacked",
+      "kind": "image",
+      "caption": "A node's channels can resolve from different scopes at the same time.",
+      "capture_instructions": "Capture the Hue panel with Header Color sourced from Category, Body Color from Global and Body Text Color from Instance; show the styled node beside it.",
+      "position": 0,
+      "alt": "A node's channels can resolve from different scopes at the same time.",
+      "final_asset": "assets/media/precedence-stacked.png"
+    },
+    {
+      "page": "02-styling-fundamentals/clearing/DESIGN.md",
+      "id": "clear-channel",
+      "kind": "gif",
+      "caption": "Clearing a specific color reveals the next applicable inherited rule without affecting other channels.",
+      "capture_instructions": "Record Header Color set at Global, Category and Instance; clear Instance, then Category, then Global, showing each effective color/source change.",
+      "position": 0,
+      "alt": "Clearing a specific color reveals the next applicable inherited rule without affecting other channels.",
+      "final_asset": "assets/media/clear-channel.gif"
+    },
+    {
+      "page": "03-category-styling/category-identity/DESIGN.md",
+      "id": "category-member-link",
+      "kind": "image",
+      "caption": "Hue's Category scope follows a member's actual My Blueprint Category.",
+      "capture_instructions": "Show a Blueprint's My Blueprint panel with a custom function assigned to Combat, its call node selected in the graph and the Hue Category section active.",
+      "position": 0,
+      "alt": "Hue's Category scope follows a member's actual My Blueprint Category.",
+      "final_asset": "assets/media/category-member-link.png"
+    },
+    {
+      "page": "03-category-styling/nested-inheritance/DESIGN.md",
+      "id": "nested-category-graphic",
+      "kind": "image",
+      "caption": "A child Category inherits the closest parent style for each individual channel.",
+      "capture_instructions": "Show Combat and Combat|Weapons/Combat|Weapons|Melee member nodes with Header Color inherited from the nearest parent and Body Color inherited from the higher parent.",
+      "position": 0,
+      "alt": "A child Category inherits the closest parent style for each individual channel.",
+      "final_asset": "assets/media/nested-category-graphic.png"
+    },
+    {
+      "page": "03-category-styling/renames-and-moves/DESIGN.md",
+      "id": "category-rename",
+      "kind": "gif",
+      "caption": "Renaming an actual Category can preserve its associated Hue styling throughout its hierarchy.",
+      "capture_instructions": "Record styled parent and child My Blueprint categories, rename the parent, and show both graph nodes retaining colors and updated source labels.",
+      "position": 0,
+      "alt": "Renaming an actual Category can preserve its associated Hue styling throughout its hierarchy.",
+      "final_asset": "assets/media/category-rename.gif"
+    },
+    {
+      "page": "04-editing-workflows/hue-panel/DESIGN.md",
+      "id": "hue-panel-anatomy",
+      "kind": "image",
+      "caption": "The Hue panel exposes channel swatches, available scopes, clearing tools and source reporting.",
+      "capture_instructions": "Capture the full docked Hue panel beside a selected compatible function node, showing all four channel rows and Instance/Category/Global scopes.",
+      "position": 0,
+      "alt": "The Hue panel exposes channel swatches, available scopes, clearing tools and source reporting.",
+      "final_asset": "assets/media/hue-panel-anatomy.png"
+    },
+    {
+      "page": "04-editing-workflows/context-menu/DESIGN.md",
+      "id": "context-menu-hue",
+      "kind": "image",
+      "caption": "The Hue submenu offers scope-specific styling without requiring the docked panel.",
+      "capture_instructions": "Right-click a node with Instance, Category and Global Function identities; capture the expanded Hue submenu with scope labels and channel commands.",
+      "position": 0,
+      "alt": "The Hue submenu offers scope-specific styling without requiring the docked panel.",
+      "final_asset": "assets/media/context-menu-hue.png"
+    },
+    {
+      "page": "04-editing-workflows/multi-selection/DESIGN.md",
+      "id": "multi-selection-view",
+      "kind": "image",
+      "caption": "Hue reports mixed values and eligible target counts across a Blueprint graph selection.",
+      "capture_instructions": "Select at least four supported node types, with different current colors, and show the Hue panel displaying Multiple Values and target counts.",
+      "position": 0,
+      "alt": "Hue reports mixed values and eligible target counts across a Blueprint graph selection.",
+      "final_asset": "assets/media/multi-selection-view.png"
+    },
+    {
+      "page": "04-editing-workflows/node-compatibility/DESIGN.md",
+      "id": "compatibility-comparison",
+      "kind": "image",
+      "caption": "Compatible nodes can be recolored while unsupported or specialized native interfaces remain safe.",
+      "capture_instructions": "Capture a Hue-styled function call beside a reroute and Documentation node, including their different visible appearances and an unsupported indication.",
+      "position": 0,
+      "alt": "Compatible nodes can be recolored while unsupported or specialized native interfaces remain safe.",
+      "final_asset": "assets/media/compatibility-comparison.png"
+    },
+    {
+      "page": "05-technical-reference/architecture/DESIGN.md",
+      "id": "native-presentation-bridge",
+      "kind": "image",
+      "caption": "Hue uses the correct visual integration path for each supported Blueprint node family.",
+      "capture_instructions": "Draw two paths: Hue custom SGraphNode wrapper for an ordinary node, and native widget decoration for specialized presentations, both fed by one style resolver.",
+      "position": 0,
+      "alt": "Hue uses the correct visual integration path for each supported Blueprint node family.",
+      "final_asset": "assets/media/native-presentation-bridge.png"
+    },
+    {
+      "page": "05-technical-reference/storage/DESIGN.md",
+      "id": "style-storage",
+      "kind": "image",
+      "caption": "Instance and Category rules live with Blueprints, while Global rules are stored in project editor configuration.",
+      "capture_instructions": "Create a three-column ownership diagram showing node GUID → owning Blueprint, category key → defining Blueprint, and typed global identity → Hue Editor config.",
+      "position": 0,
+      "alt": "Instance and Category rules live with Blueprints, while Global rules are stored in project editor configuration.",
+      "final_asset": "assets/media/style-storage.png"
+    },
+    {
+      "page": "05-technical-reference/resolution/DESIGN.md",
+      "id": "global-identity",
+      "kind": "image",
+      "caption": "Global styling groups nodes by logical identity rather than matching the text displayed on screen.",
+      "capture_instructions": "Capture Get and Set nodes for the same member variable sharing Global Variable style, with a different variable showing another identity.",
+      "position": 0,
+      "alt": "Global styling groups nodes by logical identity rather than matching the text displayed on screen.",
+      "final_asset": "assets/media/global-identity.png"
+    },
+    {
+      "page": "05-technical-reference/native-rendering/DESIGN.md",
+      "id": "native-control-safety",
+      "kind": "image",
+      "caption": "Hue keeps Unreal's native editable node controls usable while tinting supported presentation surfaces.",
+      "capture_instructions": "Capture a supported specialized node with a tinted header/body plus its normal numeric, class or object picker intact; use a legible zoom.",
+      "position": 0,
+      "alt": "Hue keeps Unreal's native editable node controls usable while tinting supported presentation surfaces.",
+      "final_asset": "assets/media/native-control-safety.png"
+    },
+    {
+      "page": "06-support/faq/DESIGN.md",
+      "id": "faq-inherited-color",
+      "kind": "image",
+      "caption": "A color may remain after clearing because an inherited Category or Global rule still applies.",
+      "capture_instructions": "Capture the Hue panel immediately after clearing an Instance Header Color, showing a visible Category/Global source label and the inherited node color.",
+      "position": 0,
+      "alt": "A color may remain after clearing because an inherited Category or Global rule still applies.",
+      "final_asset": "assets/media/faq-inherited-color.png"
+    },
+    {
+      "page": "06-support/troubleshooting/DESIGN.md",
+      "id": "unsupported-diagnostic",
+      "kind": "image",
+      "caption": "Unavailable scopes distinguish unsupported nodes from missing Category or Global identities.",
+      "capture_instructions": "Capture an intentionally unsupported Documentation or reroute node selected beside a supported node, with the Hue panel's unavailable/unsupported state readable.",
+      "position": 0,
+      "alt": "Unavailable scopes distinguish unsupported nodes from missing Category or Global identities.",
+      "final_asset": "assets/media/unsupported-diagnostic.png"
+    },
+    {
+      "page": "06-support/updating/DESIGN.md",
+      "id": "upgrade-layout",
+      "kind": "image",
+      "caption": "Updating a manual Hue installation means replacing the complete plugin directory with a compatible release.",
+      "capture_instructions": "Capture Hue.uplugin directly beneath Plugins/Hue in File Explorer, with Source, Resources and Config shown; optionally label the matching release version.",
+      "position": 0,
+      "alt": "Updating a manual Hue installation means replacing the complete plugin directory with a compatible release.",
+      "final_asset": "assets/media/upgrade-layout.png"
+    },
+    {
+      "page": "01-getting-started/introduction/TECHNICAL.md",
+      "id": "architecture-quick-map",
+      "kind": "image",
+      "caption": "Hue runs only in the editor, connecting graph styling to Blueprint-owned rules and project configuration.",
+      "capture_instructions": "Draw a conceptual flow from selected K2 node to Scope/Identity resolver, stored style overrides and Slate node presentation, with no runtime link.",
+      "position": 0,
+      "alt": "Hue runs only in the editor, connecting graph styling to Blueprint-owned rules and project configuration.",
+      "final_asset": "assets/media/architecture-quick-map.png"
+    },
+    {
+      "page": "02-styling-fundamentals/channels/TECHNICAL.md",
+      "id": "channel-mapping-technical",
+      "kind": "image",
+      "caption": "Each Hue channel is stored and resolved separately before being applied to compatible Slate surfaces.",
+      "capture_instructions": "Diagram the four FHueNodeStyleOverride flags and FLinearColor values feeding the corresponding node header/text/body/pin-label surfaces.",
+      "position": 0,
+      "alt": "Each Hue channel is stored and resolved separately before being applied to compatible Slate surfaces.",
+      "final_asset": "assets/media/channel-mapping-technical.png"
+    },
+    {
+      "page": "02-styling-fundamentals/precedence/TECHNICAL.md",
+      "id": "resolution-lookup",
+      "kind": "image",
+      "caption": "Hue resolves each visual channel through a predictable precedence chain.",
+      "capture_instructions": "Create a top-to-bottom flowchart Instance → exact Category → nearest parents → Global → Unreal Default, with an independent channel lookup label.",
+      "position": 0,
+      "alt": "Hue resolves each visual channel through a predictable precedence chain.",
+      "final_asset": "assets/media/resolution-lookup.png"
+    },
+    {
+      "page": "03-category-styling/category-identity/TECHNICAL.md",
+      "id": "category-ownership-tech",
+      "kind": "image",
+      "caption": "Category styles are stored on the Blueprint defining the relevant member.",
+      "capture_instructions": "Diagram a function call in one Blueprint referencing a member defined in another, and show CategoryStyles being read from the defining Blueprint.",
+      "position": 0,
+      "alt": "Category styles are stored on the Blueprint defining the relevant member.",
+      "final_asset": "assets/media/category-ownership-tech.png"
+    },
+    {
+      "page": "03-category-styling/renames-and-moves/TECHNICAL.md",
+      "id": "rename-migration-tech",
+      "kind": "image",
+      "caption": "Category rename migration runs on Blueprint change events rather than on every graph paint.",
+      "capture_instructions": "Create an event flow Blueprint changed/compiled → captured member category fingerprints → rename detection → CategoryStyles key migration → Slate invalidation.",
+      "position": 0,
+      "alt": "Category rename migration runs on Blueprint change events rather than on every graph paint.",
+      "final_asset": "assets/media/rename-migration-tech.png"
+    },
+    {
+      "page": "04-editing-workflows/multi-selection/TECHNICAL.md",
+      "id": "batch-deduplication-tech",
+      "kind": "image",
+      "caption": "Hue deduplicates matching Category or Global targets before applying one transaction.",
+      "capture_instructions": "Draw five selected nodes collapsing into three unique category/global identities and one FScopedTransaction, while unsupported nodes are skipped.",
+      "position": 0,
+      "alt": "Hue deduplicates matching Category or Global targets before applying one transaction.",
+      "final_asset": "assets/media/batch-deduplication-tech.png"
+    },
+    {
+      "page": "05-technical-reference/storage/TECHNICAL.md",
+      "id": "persistence-maps-tech",
+      "kind": "image",
+      "caption": "Hue persists node GUID, category path and typed global identity overrides in different data owners.",
+      "capture_instructions": "Diagram InstanceStyles: FGuid, CategoryStyles: FString on UHueBlueprintExtension, and GlobalFunctionStyles on UHueSettings, with save ownership.",
+      "position": 0,
+      "alt": "Hue persists node GUID, category path and typed global identity overrides in different data owners.",
+      "final_asset": "assets/media/persistence-maps-tech.png"
+    },
+    {
+      "page": "05-technical-reference/native-rendering/TECHNICAL.md",
+      "id": "slate-surface-tech",
+      "kind": "image",
+      "caption": "Native-safe coloring affects selected Slate surfaces without replacing unrelated controls.",
+      "capture_instructions": "Diagram HueNodeFactory, HuePinFactory and HueNativeNodeDecorator attaching color attributes to valid SGraphNode/SGraphPin surfaces, leaving editable controls intact.",
+      "position": 0,
+      "alt": "Native-safe coloring affects selected Slate surfaces without replacing unrelated controls.",
+      "final_asset": "assets/media/slate-surface-tech.png"
+    },
+    {
+      "page": "02-styling-fundamentals/precedence/DESIGN.md",
+      "id": "precedence-clearing-demo",
+      "kind": "gif",
+      "caption": "Changing a more specific rule instantly reveals the lower-precedence color underneath.",
+      "capture_instructions": "Record one node with a Global Header, then a Category Header, then an Instance Header; clear each in reverse order with the Hue panel source label visible.",
+      "position": 2,
+      "alt": "Changing a more specific rule instantly reveals the lower-precedence color underneath.",
+      "final_asset": "assets/media/precedence-clearing-demo.gif"
+    },
+    {
+      "page": "03-category-styling/nested-inheritance/DESIGN.md",
+      "id": "nested-category-override",
+      "kind": "gif",
+      "caption": "Closer Category overrides supersede a parent only for the channels they define.",
+      "capture_instructions": "Record styling Combat, then Combat|Weapons Header Color, then clearing the Weapons override; keep the My Blueprint hierarchy and relevant nodes in view.",
+      "position": 2,
+      "alt": "Closer Category overrides supersede a parent only for the channels they define.",
+      "final_asset": "assets/media/nested-category-override.gif"
+    },
+    {
+      "page": "04-editing-workflows/hue-panel/DESIGN.md",
+      "id": "picker-editing-demo",
+      "kind": "gif",
+      "caption": "The native color picker updates the selected node's supported visual regions.",
+      "capture_instructions": "Record opening a Header Color picker in Hue, adjusting to a new color, applying, and using Unreal Undo; keep the selected node visible.",
+      "position": 2,
+      "alt": "The native color picker updates the selected node's supported visual regions.",
+      "final_asset": "assets/media/picker-editing-demo.gif"
+    },
+    {
+      "page": "04-editing-workflows/multi-selection/DESIGN.md",
+      "id": "batch-undo-demo",
+      "kind": "gif",
+      "caption": "One Undo reverses an entire Hue batch edit on the eligible selection.",
+      "capture_instructions": "Record several differently colored supported nodes selected together, set Instance Body Color once, then Undo once and show all previous colors return.",
+      "position": 2,
+      "alt": "One Undo reverses an entire Hue batch edit on the eligible selection.",
+      "final_asset": "assets/media/batch-undo-demo.gif"
+    },
+    {
+      "page": "04-editing-workflows/context-menu/DESIGN.md",
+      "id": "context-menu-demo",
+      "kind": "gif",
+      "caption": "Hue context actions apply through the same style system as the panel.",
+      "capture_instructions": "Record right-clicking a supported node, choosing Hue → Instance → Header Color, selecting a tint, and showing the matching change in the Hue panel.",
+      "position": 2,
+      "alt": "Hue context actions apply through the same style system as the panel.",
+      "final_asset": "assets/media/context-menu-demo.gif"
+    },
+    {
+      "page": "02-styling-fundamentals/scopes/DESIGN.md",
+      "id": "scope-coverage-demo",
+      "kind": "gif",
+      "caption": "Changing Global affects matching identities while Instance changes only the local occurrence.",
+      "capture_instructions": "Record two uses of one function; apply Global Header Color to both, then override only one with Instance, then clear the Instance rule.",
+      "position": 2,
+      "alt": "Changing Global affects matching identities while Instance changes only the local occurrence.",
+      "final_asset": "assets/media/scope-coverage-demo.gif"
+    },
+    {
+      "page": "03-category-styling/renames-and-moves/DESIGN.md",
+      "id": "member-move-demo",
+      "kind": "gif",
+      "caption": "Moving one member to a new Category differs from renaming the Category itself.",
+      "capture_instructions": "Record a styled Combat category with two members; move only one member to Utility and show Combat keeps its original style while the moved member follows its new category.",
+      "position": 2,
+      "alt": "Moving one member to a new Category differs from renaming the Category itself.",
+      "final_asset": "assets/media/member-move-demo.gif"
+    },
+    {
+      "page": "ROADMAP.md",
+      "id": "roadmap-release-status",
+      "kind": "image",
+      "caption": "Hue v1.0.0 establishes the shipped visual styling foundation; later additions remain uncommitted.",
+      "capture_instructions": "Create a clear release timeline with v1.0.0 Released and a separate Future / Not Committed area. Do not invent version numbers, feature lists or dates.",
+      "position": 0,
+      "alt": "Hue v1.0.0 establishes the shipped visual styling foundation; later additions remain uncommitted.",
+      "final_asset": "assets/media/roadmap-release-status.png"
+    }
+  ]
+}
