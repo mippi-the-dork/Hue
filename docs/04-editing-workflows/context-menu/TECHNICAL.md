@@ -1,26 +1,23 @@
 # Right-Click Styling — Technical
 
-**Hue v1.0.0 · Unreal Engine 5.8.x · Win64 · Editor only**
+**Hue v1.0.0 · Source-level implementation**
 
-## ToolMenus registration
+## ToolMenus integration
 
-FHueModule::RegisterMenus and RegisterLoadedNodeContextMenus register graph contexts. RegisterContextMenuName accounts for different context menu names and module availability.
+`FHueModule::RegisterMenus`, `RegisterLoadedNodeContextMenus`, `RegisterContextMenuName` and `RefreshNodeContextMenus` attach Hue actions to eligible native K2 context menus. Module change handling supports contexts registered after initial startup.
 
-## Menu construction
+## Target selection
 
-FHueMenu::BuildNodeContextEntry, BuildHueMenu, BuildScopeMenu and AddChannelEntries assemble eligible submenu actions. OpenHueColorPicker connects the UI to the native picker.
+`HueMenu.cpp` checks the right-clicked `ContextNode`, confirms `FHueStyleResolver::IsSupportedNode`, and assembles relevant selected compatible nodes if the right-click target is within the selected scope. Scope availability uses Category identity or `GetGlobalKey`.
 
-## Shared resolver
+## Commands and transactions
 
-Menu and panel use the same HueStyleResolver APIs for scope checks, target deduplication, transactions and saving. The menu is not a second styling format or persistence mechanism.
+The context menu invokes `FHueStyleResolver::SetColorOverrides`, `ClearColorOverrides` and `ClearAllOverrides` for the applicable target set, rather than maintaining a separate style engine from the Hue panel. Native color-picker operations are confirmed before writing.
+
+## Source
+
+[HueMenu.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueMenu.cpp) · [HueModule.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueModule.cpp).
 
 ---
 
-## Source references
-
-- [HueStyleResolver.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueStyleResolver.cpp)
-- [SHuePanel.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/SHuePanel.cpp)
-- [HueMenu.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueMenu.cpp)
-- [HueNodeFactory.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueNodeFactory.cpp)
-
-For editor usage, [read Design](DESIGN.md). Source-reviewed claims are not equivalent to completed UE editor QA.
+For normal usage and examples, [read Design](DESIGN.md).

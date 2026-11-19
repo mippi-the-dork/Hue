@@ -1,26 +1,25 @@
 # Multi-Selection and Mixed Values — Technical
 
-**Hue v1.0.0 · Unreal Engine 5.8.x · Win64 · Editor only**
+**Hue v1.0.0 · Source-level implementation**
 
-## Unique representatives
+## Selection model
 
-GetUniqueScopeTargetCount and the resolver's internal GetUniqueScopeRepresentatives deduplicate by node instance, Blueprint category identity or global key as appropriate.
+`SHuePanel::GatherSelection` gathers selected graph nodes and tracks supported versus unsupported items. `FHueStyleResolver::GetUniqueScopeTargetCount` computes deduplicated target counts for Category/Global and ordinary counts for eligible Instance identities.
 
-## Mutation batching
+## Deduplication
 
-SetColorOverrides, ClearColorOverrides and ClearAllOverrides perform one transaction and group persistence/invalidation rather than issuing repeated writes per duplicate identity.
+In batch `SetColorOverrides` and `ClearColorOverrides`, repeated Category paths and repeated Global keys are not written redundantly. This makes a selection of several uses of one function logically consistent for Global editing.
 
-## Mixed-state logic
+## Mixed-value computation
 
-SHuePanel::GetOverrideStateText and GetSwatchColor compare selected scope values and ownership. Unsupported nodes are excluded through IsSupportedNode and reported separately.
+The panel considers not only effective `FLinearColor` but also whether the channel is explicitly overridden in each target. Two equal RGB values with different override bits are not necessarily the same underlying style state.
+
+## Transaction boundary
+
+The batch API creates one `FScopedTransaction` for the complete edit and performs necessary data-owner modifications and redraws once per action, avoiding a separate Undo entry for every selected node.
+
+[SHuePanel.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/SHuePanel.cpp) · [HueStyleResolver.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueStyleResolver.cpp).
 
 ---
 
-## Source references
-
-- [HueStyleResolver.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueStyleResolver.cpp)
-- [SHuePanel.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/SHuePanel.cpp)
-- [HueMenu.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueMenu.cpp)
-- [HueNodeFactory.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueNodeFactory.cpp)
-
-For editor usage, [read Design](DESIGN.md). Source-reviewed claims are not equivalent to completed UE editor QA.
+For normal usage and examples, [read Design](DESIGN.md).

@@ -1,31 +1,31 @@
 # Multi-Selection and Mixed Values — Design
 
-**Hue v1.0.0 · Unreal Engine 5.8.x · Win64 · Editor only**
+**Hue v1.0.0 · User guide**
 
-## Change several nodes together
+## Edit several nodes with one operation
 
-Select several compatible, unrelated nodes. Hue supports batch styling across types, functions and categories without requiring graph adjacency.
+Hue supports batch edits across nonadjacent compatible nodes, even when they are different function calls, variables, Categories or node classes. You can edit Instance colors for each node or deduplicate shared Category/Global targets.
 
-## Scope matters
+<figure class="doc-media" data-kind="gif" data-media-id="hue-batch-undo"><img src="../../assets/media-placeholder.png" alt="Hue multi-selection edit and one-step Undo demonstration" loading="lazy"><figcaption>Hue applies a batch color change in one transaction, allowing the entire compatible selection to be undone at once.<span class="media-capture-instructions"><strong>Capture instructions · GIF:</strong> Record selecting at least five visibly different supported node types and one unsupported reroute. Show the Hue panel's compatible/unsupported counts and Multiple Values, set Instance Body Color across the selection, then press Undo once to restore the prior colors. Keep the panel and graph visible.</span></figcaption></figure>
 
-**Instance** changes each selected compatible occurrence. **Category** changes each unique relevant category. **Global** changes each unique logical identity, even if selected nodes repeat that identity.
+## What each scope edits
 
-## What Multiple Values means
+- **Instance:** Every selected compatible node instance, so five nodes generally mean five targets.
+- **Category:** The *unique* applicable My Blueprint Categories represented by the selection. Multiple nodes in `Combat` share one Category target.
+- **Global:** Unique logical identities. Repeated calls to the same function are one Global Function target; Get and Set of the same variable share one Global Variable identity.
 
-Different explicit colors, inherited values or underlying ownership can trigger **Multiple Values**. Two nodes can look identical but differ because one explicitly overrides a channel and the other inherits it.
+## Understanding Multiple Values
 
-## Try a reversible batch
+The panel can report **Multiple Values** when explicit colors differ, inherited colors differ, or override ownership differs—even if some nodes appear the same color. Setting a new color across eligible targets produces a uniform explicit value for that channel at the chosen scope.
 
-Select several node types, set Instance Body Color, then Undo once. The whole set should revert as one transaction; Redo reapplies it.
+## Mixed supported and unsupported nodes
 
-## Unsupported nodes
+Unsupported nodes can remain selected. Hue leaves them unchanged and reports them separately; the compatible subset can still be edited.
 
-Keep unsupported nodes selected if convenient. Hue reports them separately and skips them rather than trying to recolor an incompatible native widget.
+## Safe practice
 
-## Important caution
-
-Category or Global changes may affect other nodes beyond the current selection, because the new rule is shared. Inspect the scope before applying a batch.
+Before applying a broad Category or Global edit, check the unique target count and whether the selection crosses systems. Afterward, inspect a few representative nodes, especially those that previously inherited a parent rule.
 
 ---
 
-For native implementation detail, [read Technical](TECHNICAL.md).
+For the Unreal implementation, [read Technical](TECHNICAL.md).

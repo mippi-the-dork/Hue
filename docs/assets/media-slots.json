@@ -154,6 +154,42 @@
       "capture_instructions": "Capture a single compatible function-call node selected with the full Hue panel docked beside its graph. Expand all three scope sections; ensure all four channel rows, one Override label, one inherited source label and Clear/Clear All controls are readable. Use a node whose Category and Global identities are both valid.",
       "alt": "Annotated Hue panel with Instance Category and Global scope controls",
       "final_asset": "assets/media/hue-panel-annotated.png"
+    },
+    {
+      "id": "hue-context-menu",
+      "kind": "image",
+      "page": "04-editing-workflows/context-menu/DESIGN.md",
+      "caption": "Compatible Blueprint node context menus offer Hue styling commands for the scopes available on that node.",
+      "capture_instructions": "Capture a right-click menu on a supported function-call node with the Hue submenu open. Show the Instance, applicable My Blueprint Category and Global Function sections and at least one channel command. Include the node beneath the menu so its context is clear.",
+      "alt": "Hue submenu in the native Unreal Blueprint node right-click menu",
+      "final_asset": "assets/media/hue-context-menu.png"
+    },
+    {
+      "id": "hue-batch-undo",
+      "kind": "gif",
+      "page": "04-editing-workflows/multi-selection/DESIGN.md",
+      "caption": "Hue applies a batch color change in one transaction, allowing the entire compatible selection to be undone at once.",
+      "capture_instructions": "Record selecting at least five visibly different supported node types and one unsupported reroute. Show the Hue panel's compatible/unsupported counts and Multiple Values, set Instance Body Color across the selection, then press Undo once to restore the prior colors. Keep the panel and graph visible.",
+      "alt": "Hue multi-selection edit and one-step Undo demonstration",
+      "final_asset": "assets/media/hue-batch-undo.gif"
+    },
+    {
+      "id": "hue-save-ownership",
+      "kind": "image",
+      "page": "04-editing-workflows/undo-saving/DESIGN.md",
+      "caption": "Instance and Category styling travel with Blueprint assets, while Global rules are maintained in project configuration.",
+      "capture_instructions": "Draw a three-lane diagram labeled Instance, Category and Global. Show the first two flowing to Blueprint assets/UHueBlueprintExtension and the third to project Hue editor config. Add Save Blueprint and Submit Config labels as appropriate.",
+      "alt": "Hue styling storage owner and source control diagram",
+      "final_asset": "assets/media/hue-save-ownership.png"
+    },
+    {
+      "id": "hue-architecture-diagram",
+      "kind": "image",
+      "page": "05-technical-and-support/architecture/DESIGN.md",
+      "caption": "Hue's editor-only architecture separates style authoring, rule resolution and native-safe Blueprint node presentation.",
+      "capture_instructions": "Create a technical diagram with HueModule, HuePanel and HueMenu feeding HueStyleResolver. Show Instance/Category data in Blueprint Extension, Global data in HueSettings, then arrows to HueNodeFactory/PinFactory and NativeNodeDecorator rendering Slate nodes. Mark Unreal Blueprint execution as unchanged.",
+      "alt": "Hue Editor integration architecture diagram",
+      "final_asset": "assets/media/hue-architecture-diagram.png"
     }
   ]
 }
