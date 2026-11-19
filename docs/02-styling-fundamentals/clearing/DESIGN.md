@@ -4,6 +4,13 @@
 
 ## Clear a single channel
 
+<!-- Media target: GIF | clear-channel | docs/assets/media/clear-channel.gif -->
+<figure class="doc-media" data-kind="gif" data-media-id="clear-channel">
+  <img src="../../assets/media-placeholder.png" alt="Clearing a specific color reveals the next applicable inherited rule without affecting other channels." loading="lazy">
+  <figcaption>Clearing a specific color reveals the next applicable inherited rule without affecting other channels.<span class="media-capture-instructions"><strong>Capture instructions · GIF:</strong> Record Header Color set at Global, Category and Instance; clear Instance, then Category, then Global, showing each effective color/source change.</span></figcaption>
+</figure>
+
+
 Expand Instance, Category or Global and select **Clear** beside a particular channel. This removes only the explicit rule at that scope; the other three channels remain untouched.
 
 For example, with red Instance Header, orange Category Header, and blue Global Header, clearing the Instance rule reveals orange. Clearing Category next reveals blue. Clearing Global finally restores Unreal's default.

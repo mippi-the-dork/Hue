@@ -6,6 +6,13 @@ Hue is an editor-only tool that makes **compatible Blueprint graphs easier to re
 
 ## Your first workflow
 
+<!-- Media target: IMAGE | getting-started-editor | docs/assets/media/getting-started-editor.png -->
+<figure class="doc-media" data-kind="image" data-media-id="getting-started-editor">
+  <img src="../assets/media-placeholder.png" alt="Hue lives alongside the Blueprint graph, giving compatible selected nodes a dedicated styling panel." loading="lazy">
+  <figcaption>Hue lives alongside the Blueprint graph, giving compatible selected nodes a dedicated styling panel.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Capture UE 5.8 Blueprint Editor with graph, selected Call Function node, docked Hue tab, and Instance/Category/Global headings readable.</span></figcaption>
+</figure>
+
+
 Install Hue for the supported Unreal Editor, open a Blueprint, select a normal Call Function node and expand Instance in the Hue tab. Set its Header Color, inspect the visual change, then Clear the override. If a lower-level category or global rule exists, you will see it again.
 
 ## First concepts

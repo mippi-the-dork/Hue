@@ -6,6 +6,13 @@ The core idea is simple: **each node can inherit color from several levels**, an
 
 ## The four channels
 
+<!-- Media target: IMAGE | fundamentals-four-channels | docs/assets/media/fundamentals-four-channels.png -->
+<figure class="doc-media" data-kind="image" data-media-id="fundamentals-four-channels">
+  <img src="../assets/media-placeholder.png" alt="Header, title, body and compatible labels can each receive their own color." loading="lazy">
+  <figcaption>Header, title, body and compatible labels can each receive their own color.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Show one normal supported node with clearly differentiated Header Color, Header Text Color, Body Color and Body Text Color; annotate the four actual surfaces.</span></figcaption>
+</figure>
+
+
 Header Color sets the primary title-bar tint. Header Text Color colors compatible title text. Body Color affects the node body and certain compact fills. Body Text Color affects eligible labels and execution-pin visuals while leaving native editable controls alone.
 
 ## Instance versus Category versus Global

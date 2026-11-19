@@ -4,6 +4,13 @@
 
 ## Recommended installation
 
+<!-- Media target: IMAGE | installation-folder | docs/assets/media/installation-folder.png -->
+<figure class="doc-media" data-kind="image" data-media-id="installation-folder">
+  <img src="../../assets/media-placeholder.png" alt="Hue installs as a normal Editor plugin under the Unreal project's Plugins directory." loading="lazy">
+  <figcaption>Hue installs as a normal Editor plugin under the Unreal project's Plugins directory.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Show Explorer at YourProject/Plugins/Hue with Hue.uplugin, Source, Resources and Config visible; avoid any nested duplicate Hue folder.</span></figcaption>
+</figure>
+
+
 For most users, install Hue through Fab or a compatible GitHub Release. Hue v1.0.0 targets **Unreal Engine 5.8.0–5.8.3, Windows 64-bit**, with UE 5.8.3 identified as the primary validated engine version in the release README.
 
 ### From Fab
@@ -17,7 +24,6 @@ Add Hue to your library, install it for the matching Unreal version through Epic
 3. Extract the complete `Hue` folder into `YourProject/Plugins/` so `Hue.uplugin` is at `YourProject/Plugins/Hue/Hue.uplugin`.
 4. Reopen the project, enable Hue in Plugins and restart if requested.
 
-<figure class="doc-media" data-kind="image" data-media-id="install-folder"><img src="../../assets/media-placeholder.png" alt="Hue plugin installed in an Unreal project Plugins folder" loading="lazy"><figcaption>Hue can be installed directly in a project's Plugins directory without changing Unreal Engine source.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Capture Windows File Explorer showing YourProject/Plugins/Hue in the address bar with Hue.uplugin, Source, Resources and Config visible together. Do not show a doubly nested Hue/Hue folder.</span></figcaption></figure>
 
 ### From source
 

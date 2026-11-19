@@ -4,6 +4,13 @@
 
 ## Style representation
 
+<!-- Media target: IMAGE | channel-mapping-technical | docs/assets/media/channel-mapping-technical.png -->
+<figure class="doc-media" data-kind="image" data-media-id="channel-mapping-technical">
+  <img src="../../assets/media-placeholder.png" alt="Each Hue channel is stored and resolved separately before being applied to compatible Slate surfaces." loading="lazy">
+  <figcaption>Each Hue channel is stored and resolved separately before being applied to compatible Slate surfaces.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Diagram the four FHueNodeStyleOverride flags and FLinearColor values feeding the corresponding node header/text/body/pin-label surfaces.</span></figcaption>
+</figure>
+
+
 `FHueNodeStyleOverride` owns independent `bOverrideHeaderColor`, `bOverrideHeaderTextColor`, `bOverrideBodyColor` and `bOverrideBodyTextColor` flags, each paired with an `FLinearColor`.
 
 ## Effective color selection

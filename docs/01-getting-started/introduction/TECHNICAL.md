@@ -4,6 +4,13 @@
 
 ## Plugin identity and supported environment
 
+<!-- Media target: IMAGE | architecture-quick-map | docs/assets/media/architecture-quick-map.png -->
+<figure class="doc-media" data-kind="image" data-media-id="architecture-quick-map">
+  <img src="../../assets/media-placeholder.png" alt="Hue runs only in the editor, connecting graph styling to Blueprint-owned rules and project configuration." loading="lazy">
+  <figcaption>Hue runs only in the editor, connecting graph styling to Blueprint-owned rules and project configuration.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Draw a conceptual flow from selected K2 node to Scope/Identity resolver, stored style overrides and Slate node presentation, with no runtime link.</span></figcaption>
+</figure>
+
+
 `Hue.uplugin` declares an **Editor** module named `Hue`, with `PostEngineInit` loading, `Win64` support and Unreal `EngineVersion: 5.8.0`. The current descriptor reports **VersionName 1.0.0**. The project README identifies UE 5.8.0–5.8.3 as its validated release range.
 
 ## Main integration surfaces

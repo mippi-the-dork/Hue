@@ -4,13 +4,19 @@
 
 ## Your first style in five steps
 
+<!-- Media target: GIF | first-use-color | docs/assets/media/first-use-color.gif -->
+<figure class="doc-media" data-kind="gif" data-media-id="first-use-color">
+  <img src="../../assets/media-placeholder.png" alt="A single Instance override changes only the selected node, then clears back to its inherited appearance." loading="lazy">
+  <figcaption>A single Instance override changes only the selected node, then clears back to its inherited appearance.<span class="media-capture-instructions"><strong>Capture instructions · GIF:</strong> Record selecting a Call Function node, opening the Hue panel, setting Instance Header Color in the native picker, then clearing it with another call to the same function visible.</span></figcaption>
+</figure>
+
+
 1. Open an ordinary Blueprint with a function or variable node.
 2. If necessary, restore the **Hue** panel from the Blueprint Editor's tab menu.
 3. Select one compatible node on the graph. Hue updates its panel for that selection.
 4. Expand **Instance**, choose **Header Color**, and pick a clearly different color. The selected node's title region changes.
 5. Use **Clear** on Header Color. The node returns to its inherited Category/Global color or the native Unreal default.
 
-<figure class="doc-media" data-kind="gif" data-media-id="first-node-style"><img src="../../assets/media-placeholder.png" alt="Hue panel styling and clearing an Instance Header Color" loading="lazy"><figcaption>A local Instance override changes only the selected compatible node and can be cleared to reveal its inherited color.<span class="media-capture-instructions"><strong>Capture instructions · GIF:</strong> Record selecting one standard Blueprint function-call node, opening the Hue panel, setting its Instance Header Color through the picker, then clicking Clear. Keep the selected node, panel scope heading, color row and result in view. End on the original inherited/default state.</span></figcaption></figure>
 
 ## Understand the four rows
 

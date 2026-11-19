@@ -4,6 +4,13 @@
 
 ## Four controls, four different jobs
 
+<!-- Media target: IMAGE | channels-annotated | docs/assets/media/channels-annotated.png -->
+<figure class="doc-media" data-kind="image" data-media-id="channels-annotated">
+  <img src="../../assets/media-placeholder.png" alt="The four visual channels target separate regions of a supported node." loading="lazy">
+  <figcaption>The four visual channels target separate regions of a supported node.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Capture a standard node styled with red header, white title text, dark blue body and yellow body labels; label each region without covering the node.</span></figcaption>
+</figure>
+
+
 | Channel | What changes | What stays native |
 | --- | --- | --- |
 | **Header Color** | Node title-bar fill; central fill on some compact nodes | Underlying node type and execution |

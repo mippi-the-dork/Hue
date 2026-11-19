@@ -4,6 +4,13 @@
 
 ## Per-channel resolution
 
+<!-- Media target: IMAGE | resolution-lookup | docs/assets/media/resolution-lookup.png -->
+<figure class="doc-media" data-kind="image" data-media-id="resolution-lookup">
+  <img src="../../assets/media-placeholder.png" alt="Hue resolves each visual channel through a predictable precedence chain." loading="lazy">
+  <figcaption>Hue resolves each visual channel through a predictable precedence chain.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Create a top-to-bottom flowchart Instance → exact Category → nearest parents → Global → Unreal Default, with an independent channel lookup label.</span></figcaption>
+</figure>
+
+
 `FHueStyleResolver::ResolveColor` checks the explicit Instance override, then `GetEffectiveCategoryColor` (exact and hierarchical category keys), then the applicable Global style. If none applies, native Unreal styling remains.
 
 ## Category distance

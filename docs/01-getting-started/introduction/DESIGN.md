@@ -4,6 +4,13 @@
 
 ## The problem Hue solves
 
+<!-- Media target: IMAGE | introduction-color-language | docs/assets/media/introduction-color-language.png -->
+<figure class="doc-media" data-kind="image" data-media-id="introduction-color-language">
+  <img src="../../assets/media-placeholder.png" alt="A consistent palette can make movement, combat and UI logic easier to recognize at a glance." loading="lazy">
+  <figcaption>A consistent palette can make movement, combat and UI logic easier to recognize at a glance.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Capture a nontrivial but readable Blueprint with movement nodes blue, combat nodes red and UI helpers purple; leave pin connections and labels visible.</span></figcaption>
+</figure>
+
+
 A Blueprint can be logically correct yet difficult to read. Hue adds a visual layer to compatible K2 Blueprint nodes, helping communicate which nodes belong to movement, combat, queries, UI, or other gameplay concerns. It styles the editor presentation without changing node execution, data flow, compilation, or packaged-game behavior.
 
 ## What you can style
