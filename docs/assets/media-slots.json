@@ -82,6 +82,42 @@
       "capture_instructions": "Capture one standard K2 function-call node with a red header, white header text, dark-blue body and yellow body/pin-label text. Annotate all four regions and keep native value inputs recognizable.",
       "alt": "Annotated Blueprint node displaying Hue's four visual channels",
       "final_asset": "assets/media/four-channel-diagram.png"
+    },
+    {
+      "id": "style-scope-comparison",
+      "kind": "image",
+      "page": "02-styling-and-inheritance/styling-scopes/DESIGN.md",
+      "caption": "The same Blueprint node can receive a broad Global color, a Category rule and an Instance exception.",
+      "capture_instructions": "Create three side-by-side Blueprint graph closeups featuring copies/calls of the same logical node. Label the Global rule that affects them all, the Category rule applied to one member group, and a final Instance-only exception with a distinct header color.",
+      "alt": "Hue Instance Category Global scope comparison",
+      "final_asset": "assets/media/style-scope-comparison.png"
+    },
+    {
+      "id": "style-precedence-gif",
+      "kind": "gif",
+      "page": "02-styling-and-inheritance/precedence/DESIGN.md",
+      "caption": "A Hue node immediately adopts the next applicable Category or Global value when a more specific override is cleared.",
+      "capture_instructions": "Record a supported function-call node with a Global blue Header Color, then apply a Category orange header and an Instance red header. Clear the Instance override to reveal orange; clear Category to reveal blue. Keep the Hue source label visible throughout.",
+      "alt": "Hue visual style precedence and clear demonstration",
+      "final_asset": "assets/media/style-precedence-gif.gif"
+    },
+    {
+      "id": "clear-channels-gif",
+      "kind": "gif",
+      "page": "02-styling-and-inheritance/clearing/DESIGN.md",
+      "caption": "Clearing an Instance color reveals the inherited Category color without affecting the node's other channels.",
+      "capture_instructions": "Record a node with a Category green Header Color and an Instance red Header Color plus an Instance yellow Body Text Color. Clear only Instance Header Color; show the header turning green while yellow body text stays. Then use Clear All Overrides and show the remaining Instance body text reverting.",
+      "alt": "Hue Clear Color and Clear All Overrides actions",
+      "final_asset": "assets/media/clear-channels-gif.gif"
+    },
+    {
+      "id": "nested-category-colors",
+      "kind": "gif",
+      "page": "03-categories-and-identity/nested-categories/DESIGN.md",
+      "caption": "Descendant Blueprint Categories inherit parent style channels until a closer Category supplies an override.",
+      "capture_instructions": "Record a Blueprint with My Blueprint Categories Combat, Combat|Weapons and Combat|Weapons|Melee visible alongside matching graph nodes. Set Combat Header Color to red, then override Weapons Header Color with orange, and finally clear Weapons; show Melee inherit red again while unrelated channels remain unchanged.",
+      "alt": "Hue nested Category inheritance updating on graph nodes",
+      "final_asset": "assets/media/nested-category-colors.gif"
     }
   ]
 }
