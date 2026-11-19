@@ -150,8 +150,8 @@
       });
     });
 
-    pages.push({title:'Roadmap',path:'ROADMAP.md',kind:'Document',summary:'Current release and future directions',search:'roadmap history planned'});
-    pages.push({title:'Media Inventory',path:'MEDIA_INVENTORY.md',kind:'Document',summary:'Visual capture plan',search:'media images gifs capture'});
+    pages.push({title:'Roadmap',path:'ROADMAP.md',kind:'Document',summary:'Release history and uncommitted directions',search:'roadmap history planned'});
+    pages.push({title:'Media Inventory',path:'MEDIA_INVENTORY.md',kind:'Document',summary:'Image and GIF capture plan',search:'media images gifs screenshots capture'});
     state.pages=pages;
     state.byPath=new Map(pages.map(p=>[p.path,p]));
   }
@@ -159,8 +159,8 @@
   function renderNav(){
     const out=[];
     out.push('<a class="nav-home" data-page="'+esc(state.manifest.home)+'" href="'+pageUrl(state.manifest.home)+'">⌂ Documentation Home</a>');
-    out.push('<a class="ref-link" data-page="ROADMAP.md" href="'+pageUrl('ROADMAP.md')+'">Roadmap · Planned Features</a>');
-    out.push('<div class="nav-label">CURRENT VERSION · '+esc((state.manifest.baseline||'v1.0.0').replace('Hue ','').toUpperCase())+'</div>');
+    out.push('<a class="ref-link" data-page="ROADMAP.md" href="'+pageUrl('ROADMAP.md')+'">Roadmap · Future Directions</a>');
+    out.push('<div class="nav-label">CURRENT VERSION · '++esc((state.manifest.baseline||'v1.0.0').replace('Hue ','').toUpperCase())+'</div>');
     
     
     
