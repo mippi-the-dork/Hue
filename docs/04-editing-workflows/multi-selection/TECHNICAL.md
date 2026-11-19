@@ -4,6 +4,13 @@
 
 ## Selection model
 
+<!-- Media target: IMAGE | batch-deduplication-tech | docs/assets/media/batch-deduplication-tech.png -->
+<figure class="doc-media" data-kind="image" data-media-id="batch-deduplication-tech">
+  <img src="../../assets/media-placeholder.png" alt="Hue deduplicates matching Category or Global targets before applying one transaction." loading="lazy">
+  <figcaption>Hue deduplicates matching Category or Global targets before applying one transaction.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Draw five selected nodes collapsing into three unique category/global identities and one FScopedTransaction, while unsupported nodes are skipped.</span></figcaption>
+</figure>
+
+
 `SHuePanel::GatherSelection` gathers selected graph nodes and tracks supported versus unsupported items. `FHueStyleResolver::GetUniqueScopeTargetCount` computes deduplicated target counts for Category/Global and ordinary counts for eligible Instance identities.
 
 ## Deduplication

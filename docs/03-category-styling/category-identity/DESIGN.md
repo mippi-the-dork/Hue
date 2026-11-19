@@ -4,6 +4,13 @@
 
 ## What Category means
 
+<!-- Media target: IMAGE | category-member-link | docs/assets/media/category-member-link.png -->
+<figure class="doc-media" data-kind="image" data-media-id="category-member-link">
+  <img src="../../assets/media-placeholder.png" alt="Hue's Category scope follows a member's actual My Blueprint Category." loading="lazy">
+  <figcaption>Hue's Category scope follows a member's actual My Blueprint Category.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Show a Blueprint's My Blueprint panel with a custom function assigned to Combat, its call node selected in the graph and the Hue Category section active.</span></figcaption>
+</figure>
+
+
 Hue Category styling follows user-defined **My Blueprint** member categories—not action-menu groupings, native C++ node classes or coincidentally matching node titles. It applies to supported functions, variables, macros and events with an applicable defining Blueprint member category.
 
 ## Style a member category

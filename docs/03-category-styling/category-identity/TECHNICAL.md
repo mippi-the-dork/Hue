@@ -4,6 +4,13 @@
 
 ## Category identity and storage
 
+<!-- Media target: IMAGE | category-ownership-tech | docs/assets/media/category-ownership-tech.png -->
+<figure class="doc-media" data-kind="image" data-media-id="category-ownership-tech">
+  <img src="../../assets/media-placeholder.png" alt="Category styles are stored on the Blueprint defining the relevant member." loading="lazy">
+  <figcaption>Category styles are stored on the Blueprint defining the relevant member.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Diagram a function call in one Blueprint referencing a member defined in another, and show CategoryStyles being read from the defining Blueprint.</span></figcaption>
+</figure>
+
+
 The resolver's GetBlueprintCategoryInfo returns the defining Blueprint, member graph and user-defined category path. HueBlueprintExtension.h defines CategoryStyles as a map of category strings to four-channel style overrides.
 
 ## Applicability

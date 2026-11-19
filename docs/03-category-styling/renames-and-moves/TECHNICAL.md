@@ -4,6 +4,13 @@
 
 ## Rename migration hooks
 
+<!-- Media target: IMAGE | rename-migration-tech | docs/assets/media/rename-migration-tech.png -->
+<figure class="doc-media" data-kind="image" data-media-id="rename-migration-tech">
+  <img src="../../assets/media-placeholder.png" alt="Category rename migration runs on Blueprint change events rather than on every graph paint." loading="lazy">
+  <figcaption>Category rename migration runs on Blueprint change events rather than on every graph paint.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Create an event flow Blueprint changed/compiled → captured member category fingerprints → rename detection → CategoryStyles key migration → Slate invalidation.</span></figcaption>
+</figure>
+
+
 FHueStyleResolver::PrimeCategoryTracking records the initial category/member snapshot. NotifyBlueprintChanged responds to Blueprint changes or compilation, calling RefreshCategoryTrackingAndMigrate.
 
 ## Migration helpers

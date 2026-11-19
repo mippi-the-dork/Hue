@@ -6,6 +6,13 @@ Category is Hue's most useful way to organize a **large family of Blueprint memb
 
 ## Example category layout
 
+<!-- Media target: IMAGE | category-inheritance-tree | docs/assets/media/category-inheritance-tree.png -->
+<figure class="doc-media" data-kind="image" data-media-id="category-inheritance-tree">
+  <img src="../assets/media-placeholder.png" alt="Nested My Blueprint categories let related members share parent styles without copying values." loading="lazy">
+  <figcaption>Nested My Blueprint categories let related members share parent styles without copying values.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Show My Blueprint Combat, Combat|Weapons and Combat|Weapons|Melee with matching graph nodes; label parent and inherited colors.</span></figcaption>
+</figure>
+
+
 A team might organize members under Combat, Combat|Weapons and Combat|Weapons|Melee. Set a Header Color on Combat, override only the Header Color on Weapons, and let Melee inherit the nearest applicable value. Body Color can continue coming from Combat.
 
 ## Rename versus move

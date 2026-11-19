@@ -4,9 +4,15 @@
 
 ## Style without leaving the graph
 
+<!-- Media target: IMAGE | context-menu-hue | docs/assets/media/context-menu-hue.png -->
+<figure class="doc-media" data-kind="image" data-media-id="context-menu-hue">
+  <img src="../../assets/media-placeholder.png" alt="The Hue submenu offers scope-specific styling without requiring the docked panel." loading="lazy">
+  <figcaption>The Hue submenu offers scope-specific styling without requiring the docked panel.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Right-click a node with Instance, Category and Global Function identities; capture the expanded Hue submenu with scope labels and channel commands.</span></figcaption>
+</figure>
+
+
 Right-click a compatible Blueprint node and open **Hue** in the node context menu. The available submenus reflect the selected node's applicable styling scopes—Instance, Category and its specific Global identity type.
 
-<figure class="doc-media" data-kind="image" data-media-id="hue-context-menu"><img src="../../assets/media-placeholder.png" alt="Hue submenu in the native Unreal Blueprint node right-click menu" loading="lazy"><figcaption>Compatible Blueprint node context menus offer Hue styling commands for the scopes available on that node.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Capture a right-click menu on a supported function-call node with the Hue submenu open. Show the Instance, applicable My Blueprint Category and Global Function sections and at least one channel command. Include the node beneath the menu so its context is clear.</span></figcaption></figure>
 
 ## How to use it
 
@@ -17,6 +23,13 @@ Right-click a compatible Blueprint node and open **Hue** in the node context men
 5. Undo if you want to reverse the action.
 
 ## Multi-selection behavior
+
+<!-- Media target: GIF | context-menu-demo | docs/assets/media/context-menu-demo.gif -->
+<figure class="doc-media" data-kind="gif" data-media-id="context-menu-demo">
+  <img src="../../assets/media-placeholder.png" alt="Hue context actions apply through the same style system as the panel." loading="lazy">
+  <figcaption>Hue context actions apply through the same style system as the panel.<span class="media-capture-instructions"><strong>Capture instructions · GIF:</strong> Record right-clicking a supported node, choosing Hue → Instance → Header Color, selecting a tint, and showing the matching change in the Hue panel.</span></figcaption>
+</figure>
+
 
 If the node you right-click belongs to the current compatible multi-selection, the context menu can apply the action to the selection. If you right-click a different node, don't assume every previously selected node is affected. Check the actual selected nodes and available scope labels.
 
