@@ -20,8 +20,18 @@ The following scenarios are **not executed in this documentation pass**. A sourc
 | HUE-14 | Style specialized supported K2 nodes | Native controls remain usable; visuals update safely | Not run |
 | HUE-15 | Select reroute/Documentation nodes | No inappropriate styling options or native breakage | Not run |
 | HUE-16 | Right-click compatible node in multi-selection | Hue menu respects supported selected scope | Not run |
-| HUE-17 | Site navigation on desktop/mobile | Five sections, Design/Technical, search and media fit viewport | Not run |
+| HUE-17 | Site navigation on desktop/mobile | Six sections, Design/Technical, search and media fit viewport | Not run |
 | HUE-18 | Search terms found inside Markdown body | Search returns relevant content excerpt | Not run |
 | HUE-19 | Check images/GIF placeholders and caption lines | All intended paths and types render correctly | Not run |
 
-Record exact UE version, Hue build, Blueprint node class, steps, actual results, Output Log and screenshot/GIF evidence before marking a test Passed.
+
+## Media and site checks
+
+| ID | Scenario | Expected result | Status |
+| --- | --- | --- | --- |
+| HUE-20 | Render all 43 media slots with the neutral placeholder | No broken URLs, captions and capture instructions remain legible | Not run |
+| HUE-21 | Test 320px, tablet and desktop documentation layouts | Images, tables, search and TOC stay inside the viewport | Not run |
+| HUE-22 | Use keyboard to search page-body content, switch Design/Technical and follow links | Focus and navigation behavior remain accessible | Not run |
+| HUE-23 | Check real Hue hero and plugin icon | Correct assets appear and are not stretched or stale | Not run |
+
+**Recording results:** Enter exact Unreal version, Hue build, test steps, observed behavior and supporting logs/screenshots before marking a test Passed. Source review is not a passing editor test.
