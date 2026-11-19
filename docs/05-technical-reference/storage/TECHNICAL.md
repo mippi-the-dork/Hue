@@ -4,6 +4,13 @@
 
 ## Blueprint extension storage
 
+<!-- Media target: IMAGE | persistence-maps-tech | docs/assets/media/persistence-maps-tech.png -->
+<figure class="doc-media" data-kind="image" data-media-id="persistence-maps-tech">
+  <img src="../../assets/media-placeholder.png" alt="Hue persists node GUID, category path and typed global identity overrides in different data owners." loading="lazy">
+  <figcaption>Hue persists node GUID, category path and typed global identity overrides in different data owners.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Diagram InstanceStyles: FGuid, CategoryStyles: FString on UHueBlueprintExtension, and GlobalFunctionStyles on UHueSettings, with save ownership.</span></figcaption>
+</figure>
+
+
 UHueBlueprintExtension (a UBlueprintExtension) declares InstanceStyles as TMap<FGuid,FHueNodeStyleOverride> and CategoryStyles as TMap<FString,FHueNodeStyleOverride>. The extension belongs to the Blueprint asset.
 
 ## Project config

@@ -6,6 +6,13 @@ Most Hue support problems fall into three groups: **a control or scope is unavai
 
 ## Start with the source label
 
+<!-- Media target: IMAGE | support-effective-source | docs/assets/media/support-effective-source.png -->
+<figure class="doc-media" data-kind="image" data-media-id="support-effective-source">
+  <img src="../assets/media-placeholder.png" alt="Effective-source labels identify why a selected node has its current color." loading="lazy">
+  <figcaption>Effective-source labels identify why a selected node has its current color.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Capture one selected node with two Hue channel rows showing distinct sources such as Override and Parent Category, with the node visible.</span></figcaption>
+</figure>
+
+
 If Clear didn't restore Unreal's original color, inspect the inherited Category or Global source. If a child changed when its parent changed, that's normal per-channel inheritance.
 
 ## Validate your node

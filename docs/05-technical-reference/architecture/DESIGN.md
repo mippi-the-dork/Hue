@@ -4,6 +4,13 @@
 
 ## How Hue fits into Unreal
 
+<!-- Media target: IMAGE | native-presentation-bridge | docs/assets/media/native-presentation-bridge.png -->
+<figure class="doc-media" data-kind="image" data-media-id="native-presentation-bridge">
+  <img src="../../assets/media-placeholder.png" alt="Hue uses the correct visual integration path for each supported Blueprint node family." loading="lazy">
+  <figcaption>Hue uses the correct visual integration path for each supported Blueprint node family.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Draw two paths: Hue custom SGraphNode wrapper for an ordinary node, and native widget decoration for specialized presentations, both fed by one style resolver.</span></figcaption>
+</figure>
+
+
 Hue is an **Editor-only Blueprint visualization plugin**. It adds a dockable Hue panel, context-menu commands and compatible node rendering while keeping Unreal's Blueprint compiler, graph connections and native controls intact.
 
 ## What it doesn't install

@@ -6,6 +6,13 @@ Hue's technical design separates **style data**, **logical target resolution**, 
 
 ## Core source modules
 
+<!-- Media target: IMAGE | technical-editor-architecture | docs/assets/media/technical-editor-architecture.png -->
+<figure class="doc-media" data-kind="image" data-media-id="technical-editor-architecture">
+  <img src="../assets/media-placeholder.png" alt="Hue separates the rules that choose colors from the native Slate surfaces that display them." loading="lazy">
+  <figcaption>Hue separates the rules that choose colors from the native Slate surfaces that display them.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Create a diagram of HueModule, HueStyleResolver, SHuePanel, HueMenu, HueNodeFactory, HuePinFactory, HueNativeNodeDecorator and Blueprint/config storage.</span></figcaption>
+</figure>
+
+
 HueStyleResolver identifies the scope target, resolves colors and applies transactions. HueModule integrates with Blueprint Editor tabs, ToolMenus and graph factories. SHuePanel and HueMenu are UI entry points. HueNodeFactory, HuePinFactory and HueNativeNodeDecorator handle compatible graph visuals.
 
 ## Data ownership

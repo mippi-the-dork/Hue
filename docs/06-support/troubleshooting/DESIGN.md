@@ -4,6 +4,13 @@
 
 ## Hue tab missing
 
+<!-- Media target: IMAGE | unsupported-diagnostic | docs/assets/media/unsupported-diagnostic.png -->
+<figure class="doc-media" data-kind="image" data-media-id="unsupported-diagnostic">
+  <img src="../../assets/media-placeholder.png" alt="Unavailable scopes distinguish unsupported nodes from missing Category or Global identities." loading="lazy">
+  <figcaption>Unavailable scopes distinguish unsupported nodes from missing Category or Global identities.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Capture an intentionally unsupported Documentation or reroute node selected beside a supported node, with the Hue panel's unavailable/unsupported state readable.</span></figcaption>
+</figure>
+
+
 Verify Hue is enabled in Edit → Plugins and restart the Editor. Open a **Blueprint Editor**, not the World Outliner, and restore the Hue tab if it was closed.
 
 ## Selected node unsupported

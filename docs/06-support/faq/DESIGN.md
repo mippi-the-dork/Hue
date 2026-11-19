@@ -4,6 +4,13 @@
 
 ## Does Hue affect gameplay?
 
+<!-- Media target: IMAGE | faq-inherited-color | docs/assets/media/faq-inherited-color.png -->
+<figure class="doc-media" data-kind="image" data-media-id="faq-inherited-color">
+  <img src="../../assets/media-placeholder.png" alt="A color may remain after clearing because an inherited Category or Global rule still applies." loading="lazy">
+  <figcaption>A color may remain after clearing because an inherited Category or Global rule still applies.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Capture the Hue panel immediately after clearing an Instance Header Color, showing a visible Category/Global source label and the inherited node color.</span></figcaption>
+</figure>
+
+
 No. Hue is an editor-only Blueprint presentation layer. Its visual colors don't alter Blueprint execution, compiler output or packaged-game rendering.
 
 ## Why didn't my variable Get and Set get separate Global colors?

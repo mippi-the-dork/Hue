@@ -4,6 +4,13 @@
 
 ## What saves where
 
+<!-- Media target: IMAGE | style-storage | docs/assets/media/style-storage.png -->
+<figure class="doc-media" data-kind="image" data-media-id="style-storage">
+  <img src="../../assets/media-placeholder.png" alt="Instance and Category rules live with Blueprints, while Global rules are stored in project editor configuration." loading="lazy">
+  <figcaption>Instance and Category rules live with Blueprints, while Global rules are stored in project editor configuration.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Create a three-column ownership diagram showing node GUID → owning Blueprint, category key → defining Blueprint, and typed global identity → Hue Editor config.</span></figcaption>
+</figure>
+
+
 | Scope | Storage | What to save/share |
 | --- | --- | --- |
 | Instance | Node-specific style in owning Blueprint asset | Save the Blueprint; commit its asset |

@@ -4,6 +4,13 @@
 
 ## Updating Hue
 
+<!-- Media target: IMAGE | upgrade-layout | docs/assets/media/upgrade-layout.png -->
+<figure class="doc-media" data-kind="image" data-media-id="upgrade-layout">
+  <img src="../../assets/media-placeholder.png" alt="Updating a manual Hue installation means replacing the complete plugin directory with a compatible release." loading="lazy">
+  <figcaption>Updating a manual Hue installation means replacing the complete plugin directory with a compatible release.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Capture Hue.uplugin directly beneath Plugins/Hue in File Explorer, with Source, Resources and Config shown; optionally label the matching release version.</span></figcaption>
+</figure>
+
+
 For manual release installations, close Unreal Editor, replace the entire Hue plugin directory, then reopen the project. For source installations, pull the chosen version and rebuild the project's Editor target as needed.
 
 ## Current supported release

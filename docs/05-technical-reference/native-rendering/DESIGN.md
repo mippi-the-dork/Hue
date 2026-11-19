@@ -4,6 +4,13 @@
 
 ## Preserving the node matters
 
+<!-- Media target: IMAGE | native-control-safety | docs/assets/media/native-control-safety.png -->
+<figure class="doc-media" data-kind="image" data-media-id="native-control-safety">
+  <img src="../../assets/media-placeholder.png" alt="Hue keeps Unreal's native editable node controls usable while tinting supported presentation surfaces." loading="lazy">
+  <figcaption>Hue keeps Unreal's native editable node controls usable while tinting supported presentation surfaces.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Capture a supported specialized node with a tinted header/body plus its normal numeric, class or object picker intact; use a legible zoom.</span></figcaption>
+</figure>
+
+
 Hue alters visual surfaces but doesn't replace a Blueprint node's computational behavior or standard editing controls. Header/body tint and compatible labels can change, while numeric input fields, checkboxes and object/class pickers remain Unreal-owned.
 
 ## Specialized node families

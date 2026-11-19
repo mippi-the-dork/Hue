@@ -4,6 +4,13 @@
 
 ## Same title does not mean same style
 
+<!-- Media target: IMAGE | global-identity | docs/assets/media/global-identity.png -->
+<figure class="doc-media" data-kind="image" data-media-id="global-identity">
+  <img src="../../assets/media-placeholder.png" alt="Global styling groups nodes by logical identity rather than matching the text displayed on screen." loading="lazy">
+  <figcaption>Global styling groups nodes by logical identity rather than matching the text displayed on screen.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Capture Get and Set nodes for the same member variable sharing Global Variable style, with a different variable showing another identity.</span></figcaption>
+</figure>
+
+
 Global styling follows a **logical identity**. Calls to one function generally share a Global Function style. Variable Get and Variable Set nodes for one member share a Global Variable style. Operators can use a stable operator identity independent of their promoted numeric type.
 
 ## Source hierarchy

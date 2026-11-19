@@ -4,6 +4,13 @@
 
 ## Slate implementations
 
+<!-- Media target: IMAGE | slate-surface-tech | docs/assets/media/slate-surface-tech.png -->
+<figure class="doc-media" data-kind="image" data-media-id="slate-surface-tech">
+  <img src="../../assets/media-placeholder.png" alt="Native-safe coloring affects selected Slate surfaces without replacing unrelated controls." loading="lazy">
+  <figcaption>Native-safe coloring affects selected Slate surfaces without replacing unrelated controls.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Diagram HueNodeFactory, HuePinFactory and HueNativeNodeDecorator attaching color attributes to valid SGraphNode/SGraphPin surfaces, leaving editable controls intact.</span></figcaption>
+</figure>
+
+
 SHueGraphNodeCallFunction, SHueGraphNodeK2Var, SHueGraphNodeK2Event, SHueGraphNodeK2Switch, SHueGraphNodeK2Timeline, SHueGraphNodeK2Operator and other specialized SHueGraphNode classes customize eligible surfaces.
 
 ## Native decoration

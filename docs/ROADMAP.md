@@ -4,6 +4,13 @@
 
 ## Release history and current state
 
+<!-- Media target: IMAGE | roadmap-release-status | docs/assets/media/roadmap-release-status.png -->
+<figure class="doc-media" data-kind="image" data-media-id="roadmap-release-status">
+  <img src="assets/media-placeholder.png" alt="Hue v1.0.0 establishes the shipped visual styling foundation; later additions remain uncommitted." loading="lazy">
+  <figcaption>Hue v1.0.0 establishes the shipped visual styling foundation; later additions remain uncommitted.<span class="media-capture-instructions"><strong>Capture instructions · Image:</strong> Create a clear release timeline with v1.0.0 Released and a separate Future / Not Committed area. Do not invent version numbers, feature lists or dates.</span></figcaption>
+</figure>
+
+
 | Release | Status | Documented functionality |
 | --- | --- | --- |
 | **v1.0.0 — Visual styling foundation** | Released | Four independent visual channels; Instance, Category and Global scopes; per-channel inheritance; nested categories; category rename tracking; mixed selection; right-click and Hue panel editing; native-safe presentation |
