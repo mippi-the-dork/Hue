@@ -1,178 +1,135 @@
 # Hue
 
-### Give your Blueprints a visual language.
+**Visual Blueprint Node Styling for Unreal Engine**
 
-**Persistent, flexible node styling for Unreal Engine.** Make the important parts of a graph recognizable at a glance—without changing how that Blueprint works.
+**Make your Blueprints easier to read, without changing how they work.**
 
-![Unreal Engine](https://img.shields.io/badge/Unreal%20Engine-5.8.x-black?logo=unrealengine)
-![Platform](https://img.shields.io/badge/Platform-Win64-blue)
-![Plugin Type](https://img.shields.io/badge/Plugin-Editor%20Only-green)
-![Version](https://img.shields.io/badge/Version-1.0.0-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
+Hue adds persistent, customizable styling to compatible Blueprint nodes so important operations, shared systems and exceptions are recognizable at a glance. Define visual conventions for individual nodes, Blueprint Categories or matching nodes throughout your project—all from a native Unreal Editor workflow.
 
-![Hue styling applied to an Unreal Engine Blueprint graph](Doc/Images/Hue-Hero.png)
+[![Unreal Engine](https://img.shields.io/badge/Unreal%20Engine-5.8.x-black?logo=unrealengine)](https://www.unrealengine.com/) ![Platform](https://img.shields.io/badge/Platform-Win64-blue) ![Editor Only](https://img.shields.io/badge/Plugin-Editor%20Only-217346) ![Version](https://img.shields.io/badge/Hue-v1.0.0-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-> ### **Explore the complete Hue documentation**
+<p align="center">
+  <img src="Doc/Images/Hue-Hero.png" alt="Hue visual node styling applied to an Unreal Engine Blueprint graph" width="100%">
+</p>
+
+---
+
+## Your Blueprints should communicate more
+
+Blueprint graphs communicate both **what a system does** and **how its pieces relate**. But as graphs grow, events, functions, variables, checks and critical operations can start competing for attention. Comments and good layout help, but not every relationship should need another comment box.
+
+**Hue gives your graphs a consistent visual language.**
+
+- **Find important logic faster.** Give critical operations and frequently used systems a recognizable appearance.
+- **Make conventions reusable.** Style one node, related Blueprint members or matching logical nodes project-wide.
+- **Keep related nodes visually related.** Let nested Blueprint Categories inherit styling rather than configuring every member separately.
+- **Emphasize exceptions without breaking consistency.** Override one channel on one node while inheriting the others.
+- **Keep editing familiar.** Work in a dockable Hue panel or compatible node context menus, using native Unreal Undo/Redo.
+- **Style the graph, not the gameplay.** Hue changes compatible editor presentations, not Blueprint execution or packaged-game behavior.
+
+For example, a team might use green for queries, blue for movement, orange for combat, purple for UI and red for critical state changes. **These are examples, not preset rules or mandatory categories.**
+
+## Explore the documentation
+
+> ### [**Hue Documentation — Full User Guide and Technical Reference**](https://mippi-the-dork.github.io/Hue/)
 >
-> **[Open the Hue Documentation Website](https://mippi-the-dork.github.io/Hue/)**
->
-> Everything you need to use Hue: getting started, practical workflows, every styling scope and visual channel, inheritance rules, supported nodes, saving, troubleshooting and technical implementation.
+> **Everything you need to learn and use Hue, in one place.** Follow your first styling workflow, explore each visual channel and styling scope, understand inheritance and precedence, or look up compatible nodes, storage and troubleshooting.
 >
 > **[Get Started](https://mippi-the-dork.github.io/Hue/?page=01-getting-started%2Ffirst-use%2FDESIGN.md)** · **[Visual Channels](https://mippi-the-dork.github.io/Hue/?page=02-styling-fundamentals%2Fchannels%2FDESIGN.md)** · **[Styling Scopes](https://mippi-the-dork.github.io/Hue/?page=02-styling-fundamentals%2Fscopes%2FDESIGN.md)** · **[Editing Workflows](https://mippi-the-dork.github.io/Hue/?page=04-editing-workflows%2FREADME.md)**
 
----
+This README is an overview of what Hue offers. **The [documentation website](https://mippi-the-dork.github.io/Hue/) is the maintained reference for exact behavior, installation, supported nodes, workflows and technical details.**
 
-## Your Blueprints do more than execute logic. They communicate intent.
+## Four visual channels. Your choice of styling.
 
-As Blueprints grow, everything starts competing for attention: functions, variables, events, validation, gameplay systems, and the occasional node that absolutely must not be overlooked.
+Hue provides four independently configurable channels. Change only what you need and keep the other parts of the node's native or inherited appearance.
 
-Comments and clean layouts help, but they don't always tell you **what something means the moment you see it**.
-
-Hue lets you establish a consistent visual language for your team. For example:
-
-| Color | Meaning |
+| Visual channel | What it controls |
 | --- | --- |
-| 🟢 Green | Queries and read-only operations |
-| 🔵 Blue | Movement |
-| 🟠 Orange | Combat |
-| 🟣 Purple | UI |
-| 🔴 Red | Critical state changes |
+| **[Header Color](https://mippi-the-dork.github.io/Hue/?page=02-styling-fundamentals%2Fchannels%2FDESIGN.md)** | The primary color of a compatible node's header |
+| **Header Text Color** | Text presented in the header |
+| **Body Color** | The node's compatible body/background presentation |
+| **Body Text Color** | Compatible text presented within the node body |
 
-*These are example conventions, not hardcoded Hue categories or required colors.*
+### One system. Three styling scopes.
 
-A graph becomes easier to scan, a shared function becomes easier to recognize, and special-case logic can stand out without changing its behavior.
-
-## Why use Hue?
-
-**Color more than just a node's header.** Hue provides four independent channels: **Header Color, Header Text Color, Body Color and Body Text Color**. Change one without having to replace the others.
-
-**Make your rules reusable.** Apply styling to a single **Instance**, to members of a user-defined **My Blueprint Category**, or to the same logical node identity **Globally** throughout the project.
-
-**Build a hierarchy, not a maintenance burden.** Nested Categories inherit styling from their parents, channel by channel. Override only what needs to be different. Clear a rule and the next inherited color becomes visible.
-
-**Style multiple nodes at once.** Select different compatible node types and edit them together. Hue reports mixed values and unsupported selections, and uses native Unreal **Undo/Redo** transactions.
-
-**See where a color came from.** Hue reports whether a channel is explicitly overridden, inherited from a Category or parent Category, provided by a Global rule, or coming from Unreal's default.
-
-**Work where you're already working.** Use the dedicated dockable **Hue panel** or a compatible node's **right-click → Hue** context menu. You don't need to change your Blueprint authoring workflow.
-
-**Keep native controls intact.** Hue colors compatible Blueprint node presentations while preserving Unreal-owned inputs and interactions. It is an editor-only visual tool, not a gameplay framework.
-
-## One system. Three levels of styling.
-
-| Scope | Best for | Example |
+| Scope | What it solves | Example |
 | --- | --- | --- |
-| **Instance** | One specific node occurrence | Highlight a critical `Apply Damage` call in a single graph |
-| **Category** | Related Blueprint members | Give `Combat` functions and variables a shared header color |
-| **Global** | The same logical node identity across the project | Make calls to a particular function consistently recognizable |
+| **[Instance](https://mippi-the-dork.github.io/Hue/?page=02-styling-fundamentals%2Fscopes%2FDESIGN.md)** | Call out a specific occurrence | Highlight one critical `Apply Damage` call |
+| **Category** | Keep related user-defined Blueprint members consistent | Give `Combat` functions and variables a shared style |
+| **Global** | Recognize the same logical node identity across the project | Identify calls to a particular function wherever they appear |
 
-Hue resolves each channel independently:
+Hue resolves each channel independently using **Instance → Exact Category → Parent Categories → Global → Unreal Default**. A node can therefore combine an inherited header color, a Global body color and an Instance text override without duplicating whole styles.
 
-```text
-Instance
-  ↓
-Exact Category
-  ↓
-Nearest Parent Category → Higher Parents
-  ↓
-Global
-  ↓
-Unreal Default
-```
+[**Learn about style precedence and inheritance →**](https://mippi-the-dork.github.io/Hue/?page=02-styling-fundamentals%2Fprecedence%2FDESIGN.md)
 
-That means one node can use a **Category header**, **Global body tint**, and **Instance text color** at the same time.
+## Useful in real Blueprint workflows
 
-Your rules don't have to be duplicated across every graph. They work together, and you can still make exceptions when the context calls for it.
+### Give gameplay systems recognizable conventions
 
-**Learn more:** [Style Precedence and Effective Sources](https://mippi-the-dork.github.io/Hue/?page=02-styling-fundamentals%2Fprecedence%2FDESIGN.md) · [Nested Category Inheritance](https://mippi-the-dork.github.io/Hue/?page=03-category-styling%2Fnested-inheritance%2FDESIGN.md)
+Make movement, combat, UI and validation logic easier to spot across busy graphs. Category styling helps keep related Blueprint functions and variables visually consistent, including when Categories are nested.
 
-## Built for real Blueprint workflows
+[**Explore Category styling →**](https://mippi-the-dork.github.io/Hue/?page=03-category-styling%2FREADME.md)
 
-Hue supports ordinary compatible K2 graph nodes and many specialized presentations, including functions, variables, events, operators, switches, sequences, timelines and composites where safe styling is possible.
+### Recognize shared functionality everywhere
 
-A few examples of where it helps:
+Use Global styling to give a particular logical node identity the same recognizable presentation across the project. Hue matches the node's logical identity—not merely its displayed title—so your rules are more specific than a text-based name match.
 
-- **Gameplay systems:** Give Combat, Movement and UI recognizable color conventions that stay readable across larger graphs.
-- **Shared functions:** Use Global styling to make repeat calls to the same function familiar wherever they appear.
-- **Critical exceptions:** Override an individual node to emphasize a risky or high-impact operation without recoloring every use.
-- **Refactoring:** Keep Category-based styles organized as nested Categories evolve; Hue tracks applicable Category renames.
-- **Team readability:** Use consistent shared styles so a graph communicates structure to someone who didn't originally build it.
+### Make an exception stand out
 
-Hue stores **Instance and Category styles with their Blueprint assets** and **Global styles in project editor configuration**, making them suitable for normal team source-control workflows.
+When one operation needs extra attention, apply an Instance override. Change a header, body or text channel without replacing the remaining inherited colors.
 
-**Learn more:** [Hue Panel and Color Picker](https://mippi-the-dork.github.io/Hue/?page=04-editing-workflows%2Fhue-panel%2FDESIGN.md) · [Multi-Selection and Mixed Values](https://mippi-the-dork.github.io/Hue/?page=04-editing-workflows%2Fmulti-selection%2FDESIGN.md) · [Saving and Project Configuration](https://mippi-the-dork.github.io/Hue/?page=05-technical-reference%2Fstorage%2FDESIGN.md)
+### Edit several nodes together
 
----
+Select compatible nodes and apply styling in one operation. Hue displays mixed values and unsupported selections where appropriate, and integrates with native Unreal **Undo/Redo** transactions.
 
-## Start styling
+[**Learn about multi-selection →**](https://mippi-the-dork.github.io/Hue/?page=04-editing-workflows%2Fmulti-selection%2FDESIGN.md)
 
-Hue **v1.0.0** targets **Unreal Engine 5.8.0–5.8.3 on Windows 64-bit**. It is an **Editor-only** plugin and does not require Unreal Engine source modifications.
+### Keep styles with your project
 
-You can install Hue from a compatible [GitHub Release](https://github.com/mippi-the-dork/Hue/releases), from Fab where available, or directly from source.
+Hue stores **Instance and Category styles with Blueprint assets** and **Global styles in project editor configuration**. The distinction matters when saving, reviewing changes and sharing visual conventions through source control.
 
-For detailed installation and update steps, follow the **[Installation and Compatibility Guide](https://mippi-the-dork.github.io/Hue/?page=01-getting-started%2Finstallation%2FDESIGN.md)**.
+[**Learn how Hue saves styles →**](https://mippi-the-dork.github.io/Hue/?page=05-technical-reference%2Fstorage%2FDESIGN.md)
 
-Once installed, open a Blueprint Editor, select a compatible node and open the **Hue** tab.
+## Get Hue
 
-### Documentation shortcuts
+**Hue v1.0.0** targets **Unreal Engine 5.8.0–5.8.3 on Windows 64-bit** and runs in the **Editor only**. It does not require engine source modifications.
 
-| I want to… | Read |
-| --- | --- |
-| Style my first node | [Your First Styled Node](https://mippi-the-dork.github.io/Hue/?page=01-getting-started%2Ffirst-use%2FDESIGN.md) |
-| Understand the four color channels | [Four Visual Channels](https://mippi-the-dork.github.io/Hue/?page=02-styling-fundamentals%2Fchannels%2FDESIGN.md) |
-| Decide between Instance, Category and Global | [Styling Scopes](https://mippi-the-dork.github.io/Hue/?page=02-styling-fundamentals%2Fscopes%2FDESIGN.md) |
-| Understand inherited colors | [Style Precedence](https://mippi-the-dork.github.io/Hue/?page=02-styling-fundamentals%2Fprecedence%2FDESIGN.md) |
-| Work with nested Categories | [Category Styling](https://mippi-the-dork.github.io/Hue/?page=03-category-styling%2FREADME.md) |
-| Batch-style a Blueprint selection | [Multi-Selection](https://mippi-the-dork.github.io/Hue/?page=04-editing-workflows%2Fmulti-selection%2FDESIGN.md) |
-| Check which nodes can be styled | [Node Compatibility](https://mippi-the-dork.github.io/Hue/?page=04-editing-workflows%2Fnode-compatibility%2FDESIGN.md) |
-| Understand how styles are saved | [Saving and Project Configuration](https://mippi-the-dork.github.io/Hue/?page=05-technical-reference%2Fstorage%2FDESIGN.md) |
-| Fix an unexpected result | [Troubleshooting Hue](https://mippi-the-dork.github.io/Hue/?page=06-support%2Ftroubleshooting%2FDESIGN.md) |
-| Explore the implementation | [Technical Reference](https://mippi-the-dork.github.io/Hue/?page=05-technical-reference%2FREADME.md) |
+Install a compatible release from GitHub, use Fab where available, or build from the source in this repository. Once enabled, open a Blueprint Editor, select a compatible node and open the **Hue** panel.
 
-**[Browse the full documentation →](https://mippi-the-dork.github.io/Hue/)**
+**[Download GitHub Releases](https://github.com/mippi-the-dork/Hue/releases)** · **[Installation Guide](https://mippi-the-dork.github.io/Hue/?page=01-getting-started%2Finstallation%2FDESIGN.md)** · **[Your First Styled Node](https://mippi-the-dork.github.io/Hue/?page=01-getting-started%2Ffirst-use%2FDESIGN.md)**
 
----
+## Important limitations
 
-## What Hue doesn't do
+Hue is an **editor-side Blueprint presentation tool**, not a replacement for native node functionality or a runtime gameplay system.
 
-Hue is a **Blueprint Editor presentation tool**, not a replacement for Blueprint functionality.
+- **Presentation only.** Hue does not change node execution, Blueprint compilation, data flow, gameplay logic or packaged-game rendering.
+- **Not every node can be styled.** Coverage depends on whether a compatible K2 node presentation can safely accept a styling channel. Specialized or third-party widgets may retain their native appearance.
+- **Some nodes are deliberately excluded.** Reroute and Documentation nodes are unsupported in v1.0.0.
+- **Native editable controls remain native.** Hue does not replace embedded numeric fields, checkboxes, dropdowns or pickers just to recolor them.
+- **Category has a specific meaning.** It refers to relevant user-defined **My Blueprint Categories**, not arbitrary action-menu groups or C++ node classes.
+- **Global doesn't mean every node with the same title.** Global matching uses Hue's logical node identity.
+- **Source control is still your responsibility.** Hue does not manage checkouts, permissions or merge conflicts; its Blueprint and project configuration data must be saved and shared normally.
+- **No runtime Hue dependency.** The plugin doesn't add a packaged-game styling or gameplay system.
 
-- It **does not** change node execution, data flow, compilation, runtime logic or packaged-game rendering.
-- It **does not** add a gameplay or runtime dependency, and it requires **no Unreal Engine source changes**.
-- It **does not** replace native editable node controls such as numeric fields, checkboxes, dropdowns or object/class pickers merely to recolor them.
-- It **does not** guarantee styling for every third-party or specialized K2 presentation. Unsupported widgets retain their native appearance.
-- **Reroute** and **Documentation** nodes are intentionally unsupported in v1.0.0.
-- **Category** means a relevant user-defined **My Blueprint Category**, not an action-menu category or C++ node class.
-- **Global** uses a logical Hue identity, not just a matching node title.
-- It **does not** manage source-control checkouts, permissions or conflicts.
+Hue favors preserving native Blueprint behavior over forcing styling onto incompatible controls.
 
-Hue favors preserving a node's native behavior over forcing a color change onto an incompatible interface.
+For full details, see [Node Compatibility](https://mippi-the-dork.github.io/Hue/?page=04-editing-workflows%2Fnode-compatibility%2FDESIGN.md) and [Troubleshooting](https://mippi-the-dork.github.io/Hue/?page=06-support%2Ftroubleshooting%2FDESIGN.md).
 
-For details, see [Supported and Unsupported Node Presentations](https://mippi-the-dork.github.io/Hue/?page=04-editing-workflows%2Fnode-compatibility%2FDESIGN.md).
+## What's next?
 
-## Reporting bugs
+Hue v1.0.0 establishes the initial styling system: four visual channels, three styling scopes, nested Category inheritance, native editor workflows and persistent style storage.
 
-Found an issue? [**Open a bug report**](https://github.com/mippi-the-dork/Hue/issues).
+Future directions are tracked in the documentation. **Roadmap ideas are not promises of inclusion in a specific release.**
 
-Include the Hue version, exact Unreal Engine version, Windows version, installation method, affected Blueprint node type, styling scope and channel, whether single- or multi-selection was involved, and reproduction steps.
+[**View the Hue Roadmap →**](https://mippi-the-dork.github.io/Hue/?page=ROADMAP.md)
 
-For visual issues, attach a **complete screenshot of the affected node** (not just the colored region), along with relevant Unreal Editor logs when available.
+## Issues, feature requests and contributions
 
-You can also consult the [Troubleshooting Guide](https://mippi-the-dork.github.io/Hue/?page=06-support%2Ftroubleshooting%2FDESIGN.md) before opening an issue.
+Found a bug? [Open an issue](https://github.com/mippi-the-dork/Hue/issues) with your Hue and Unreal versions, the affected Blueprint node type, scope and channel, reproduction steps, and a screenshot of the **whole affected node**. Include relevant Output Log information where helpful.
 
-## Feature requests
+Have an idea? [Submit a feature request](https://github.com/mippi-the-dork/Hue/issues) describing the Blueprint readability or authoring problem you want to solve and the result you're after.
 
-Have an idea for Hue? [**Suggest a feature**](https://github.com/mippi-the-dork/Hue/issues).
-
-Tell us about the Blueprint readability or workflow problem you're trying to solve, not just the feature you'd like added. Hue's goal is to help communicate structure and intent while respecting Unreal's native editing experience.
-
-For future directions and the current release baseline, see the [Roadmap](https://mippi-the-dork.github.io/Hue/?page=ROADMAP.md). Uncommitted ideas aren't promises of a future release.
-
-## Contributions
-
-Pull requests are welcome. For substantial additions, please open an [issue](https://github.com/mippi-the-dork/Hue/issues) first so we can discuss the intended behavior and integration path.
-
-Contributions should preserve Hue's editor-only focus, native-safe styling, predictable persistence and existing Blueprint functionality. If a feature changes user-facing behavior, update the corresponding **Design and Technical documentation** alongside the code.
+**Pull requests are welcome.** For major changes, open an issue first so the intended behavior and scope can be discussed. Contributions should preserve native editing behavior, editor-only operation and predictable persistence, with related documentation updated when applicable.
 
 ## License
 
@@ -180,6 +137,6 @@ Hue is distributed under the **MIT License**. See [LICENSE](LICENSE) for the ful
 
 ---
 
-Hue is created by **[Mippi the Dork](https://github.com/mippi-the-dork)**.
+**Hue is created by Mippi the Dork.**
 
-**Make the Blueprint easier to read. Keep the Blueprint working exactly as it did before.**
+**[Explore the Documentation](https://mippi-the-dork.github.io/Hue/)** · **[Get Hue](https://github.com/mippi-the-dork/Hue/releases)** · **[Report an Issue](https://github.com/mippi-the-dork/Hue/issues)**
