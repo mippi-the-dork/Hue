@@ -118,6 +118,42 @@
       "capture_instructions": "Record a Blueprint with My Blueprint Categories Combat, Combat|Weapons and Combat|Weapons|Melee visible alongside matching graph nodes. Set Combat Header Color to red, then override Weapons Header Color with orange, and finally clear Weapons; show Melee inherit red again while unrelated channels remain unchanged.",
       "alt": "Hue nested Category inheritance updating on graph nodes",
       "final_asset": "assets/media/nested-category-colors.gif"
+    },
+    {
+      "id": "category-rename-preservation",
+      "kind": "gif",
+      "page": "03-categories-and-identity/category-renames/DESIGN.md",
+      "caption": "A Hue Category style remains associated with its Blueprint member hierarchy after a Category rename.",
+      "capture_instructions": "Record a Blueprint with styled My Blueprint Categories Attack and Attack|Weapons. Rename the parent Attack to Combat through the native Blueprint Category editing workflow. Show the updated Combat and Combat|Weapons paths and confirm their previously styled nodes retain their Hue colors.",
+      "alt": "Hue Category rename preserving inherited node colors",
+      "final_asset": "assets/media/category-rename-preservation.gif"
+    },
+    {
+      "id": "global-variable-get-set",
+      "kind": "image",
+      "page": "03-categories-and-identity/global-identities/DESIGN.md",
+      "caption": "Variable Get and Set nodes can share the same Global Variable style because they represent one underlying member identity.",
+      "capture_instructions": "Show one Blueprint containing Get and Set nodes for the same named variable and an unrelated variable. Apply a recognizable Global Variable Header Color so Get and Set share the color while the unrelated variable remains unchanged. Keep the Hue panel source label visible.",
+      "alt": "Hue Global Variable style shared by Get and Set nodes",
+      "final_asset": "assets/media/global-variable-get-set.png"
+    },
+    {
+      "id": "node-family-comparison",
+      "kind": "image",
+      "page": "03-categories-and-identity/node-compatibility/DESIGN.md",
+      "caption": "Hue applies its visual channels to different supported Blueprint node families while leaving their native interaction controls intact.",
+      "capture_instructions": "Capture a graph containing a function-call node, variable Get/Set, event, branch/switch, compact operator and sequence/timeline where compatible. Apply distinct Hue colors but leave pins and value-entry controls visible and readable. Include at least one unsupported reroute node for comparison.",
+      "alt": "Hue styling across several supported K2 node types",
+      "final_asset": "assets/media/node-family-comparison.png"
+    },
+    {
+      "id": "hue-panel-annotated",
+      "kind": "image",
+      "page": "04-editing-workflows/hue-panel/DESIGN.md",
+      "caption": "The Hue panel shows available scopes, individual color channels and the source of the effective style for the current selection.",
+      "capture_instructions": "Capture a single compatible function-call node selected with the full Hue panel docked beside its graph. Expand all three scope sections; ensure all four channel rows, one Override label, one inherited source label and Clear/Clear All controls are readable. Use a node whose Category and Global identities are both valid.",
+      "alt": "Annotated Hue panel with Instance Category and Global scope controls",
+      "final_asset": "assets/media/hue-panel-annotated.png"
     }
   ]
 }

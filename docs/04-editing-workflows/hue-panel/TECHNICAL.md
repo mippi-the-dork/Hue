@@ -1,30 +1,27 @@
-# Hue Panel and Color Picker — Technical
+# Hue Panel — Technical
 
-**Hue v1.0.0 · Unreal Engine 5.8.x · Win64 · Editor only**
+**Hue v1.0.0 · Unreal implementation reference**
 
-## Panel lifecycle
+## Construction and tab registration
 
-FHueModule registers Blueprint Editor tabs through RegisterBlueprintTabs and extends layout through ExtendBlueprintLayout. SHuePanel is the actual native Slate panel.
+`FHueModule::RegisterBlueprintTabs` uses a tab factory implemented in `HueTabSummoner`, integrating into the Blueprint editor layout rather than opening a separate application. `SHuePanel::Construct` initializes native Slate UI.
 
-## Selection refresh
+## Selection cache
 
-SHuePanel::Tick, GatherSelection, BuildSelectionKey and RefreshSelectionCache detect new selection sets. RebuildPanel and BuildScopeSection create the currently applicable controls.
+`GatherSelection`, `BuildSelectionKey`, `RefreshSelectionCache`, and `RebuildPanel` drive context-dependent updates. The panel must avoid rebuilding its whole widget tree unnecessarily on every editor tick.
 
-## Action handling
+## Scope and channel controls
 
-OnSetColorClicked launches the native color picker; OnClearColorClicked and OnClearScopeClicked call resolver mutations. GetOverrideStateText and GetSingleSelectionSourceText provide mixed and inherited source reporting.
+`HuePanelPrivate::IsScopeApplicable` checks supported node identity and the validity of Category/Global scope information. The swatch and source label are derived from explicit and effective style values. Picker callbacks call the batch style-resolver API.
 
-## Target counting
+## Undo and color chooser
 
-GetScopeTargetCount reports unique identities, while GetEligibleNodeCount tracks how many compatible selected nodes can participate in a scope.
+The panel uses native `SColorPicker` and `SColorBlock` widgets; selection edits delegate transactions to `FHueStyleResolver`. Native color editing does not require a custom Blueprint node execution change.
+
+## Source
+
+[SHuePanel.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/SHuePanel.cpp) · [HueTabSummoner.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueTabSummoner.cpp) · [HueModule.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueModule.cpp).
 
 ---
 
-## Source references
-
-- [HueStyleResolver.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueStyleResolver.cpp)
-- [SHuePanel.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/SHuePanel.cpp)
-- [HueMenu.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueMenu.cpp)
-- [HueNodeFactory.cpp](https://github.com/mippi-the-dork/Hue/blob/main/Source/Hue/Private/HueNodeFactory.cpp)
-
-For editor usage, [read Design](DESIGN.md). Source-reviewed claims are not equivalent to completed UE editor QA.
+For usage and examples, [read Design](DESIGN.md).
