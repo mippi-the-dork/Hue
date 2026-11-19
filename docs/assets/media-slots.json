@@ -190,6 +190,42 @@
       "capture_instructions": "Create a technical diagram with HueModule, HuePanel and HueMenu feeding HueStyleResolver. Show Instance/Category data in Blueprint Extension, Global data in HueSettings, then arrows to HueNodeFactory/PinFactory and NativeNodeDecorator rendering Slate nodes. Mark Unreal Blueprint execution as unchanged.",
       "alt": "Hue Editor integration architecture diagram",
       "final_asset": "assets/media/hue-architecture-diagram.png"
+    },
+    {
+      "id": "hue-style-ownership-chart",
+      "kind": "image",
+      "page": "05-technical-and-support/storage/DESIGN.md",
+      "caption": "Hue stores local node styles in Blueprint assets and project-wide Global styles in its editor configuration.",
+      "capture_instructions": "Capture or diagram an open Blueprint showing one selected Instance override and a Category override, plus Project Settings → Plugins → Hue showing Global Styles. Label which change writes the Blueprint asset versus project configuration.",
+      "alt": "Hue data storage split between Blueprint assets and editor settings",
+      "final_asset": "assets/media/hue-style-ownership-chart.png"
+    },
+    {
+      "id": "hue-storage-technical",
+      "kind": "image",
+      "page": "05-technical-and-support/storage/TECHNICAL.md",
+      "caption": "Hue separates serialized Blueprint style maps, project-wide configuration and computed effective colors.",
+      "capture_instructions": "Draw a data-flow diagram from selected UEdGraphNode/NodeGuid and My Blueprint Category to UHueBlueprintExtension maps, plus GetGlobalKey to UHueSettings GlobalFunctionStyles. Merge those inputs in HueStyleResolver before the final per-channel Slate tint.",
+      "alt": "Hue storage and style resolver technical data-flow diagram",
+      "final_asset": "assets/media/hue-storage-technical.png"
+    },
+    {
+      "id": "hue-troubleshooting-panel",
+      "kind": "image",
+      "page": "05-technical-and-support/troubleshooting/DESIGN.md",
+      "caption": "Hue identifies unavailable scopes and mixed-value selections without modifying unsupported nodes.",
+      "capture_instructions": "Capture the Hue panel with a selection containing at least one unsupported node and one supported node. Show the supported/unsupported selection counts and an unavailable Category or Global scope, keeping the selected graph nodes visible.",
+      "alt": "Hue panel unsupported and unavailable scope diagnostics",
+      "final_asset": "assets/media/hue-troubleshooting-panel.png"
+    },
+    {
+      "id": "hue-release-update",
+      "kind": "image",
+      "page": "05-technical-and-support/updating/DESIGN.md",
+      "caption": "Replacing the complete Hue plugin folder keeps source and precompiled release files from becoming mixed.",
+      "capture_instructions": "Capture Windows File Explorer showing the Hue folder immediately inside a project's Plugins directory, with Hue.uplugin and Source/Resources/Config at the right level. Include a small label indicating the replacement is performed with Unreal Editor closed.",
+      "alt": "Hue plugin installation folder prepared for release update",
+      "final_asset": "assets/media/hue-release-update.png"
     }
   ]
 }
