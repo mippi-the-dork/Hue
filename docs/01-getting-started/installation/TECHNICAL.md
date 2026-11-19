@@ -16,7 +16,7 @@ The v1.0.0 [Hue.uplugin](https://github.com/mippi-the-dork/Hue/blob/main/Hue.upl
 
 ## Diagnosing missing UI
 
-Separate plugin load failure from Blueprint tab registration, graph node compatibility and scope applicability. A Hue tab can exist even if the currently selected node does not have an available Category or Global identity. See [Editor Architecture](../../05-technical-and-support/architecture/TECHNICAL.md).
+Separate plugin load failure from Blueprint tab registration, graph node compatibility and scope applicability. A Hue tab can exist even if the currently selected node does not have an available Category or Global identity. See [Editor Architecture](../../05-technical-reference/architecture/TECHNICAL.md).
 
 ---
 
